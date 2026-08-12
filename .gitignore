@@ -6,5 +6,6 @@ __pycache__/
 # 使用者記憶資料（不入庫）
 local_memory/
 
-# 本機配置（含環境變數引用）
+# 本機配置（含環境變數引用 / 個人設定）
 .mcp.json
+mcp/config.yaml
