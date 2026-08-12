@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "daozhu": {
+      "command": "python",
+      "args": [".claude/daozhu-mcp/server.py"],
+      "env": {
+        "DAOZHU_MEMORY_DIR": "${PWD}/.claude/daozhu-mcp/local_memory"
+      }
+    }
+  }
+}
