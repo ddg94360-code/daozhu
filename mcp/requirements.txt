@@ -1,2 +1,4 @@
 mcp==1.28.1
 pytest==8.3.4
+# 可選：載入 config.yaml 需要 pyyaml（未安裝則用預設設定）
+pyyaml>=6.0

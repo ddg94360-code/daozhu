@@ -1,122 +1,140 @@
-# 道樞（Dàoshū）— 東方哲學 AI 調度框架
+# 道樞 Dàoshū — An Eastern-Philosophy AI Orchestrator
 
-> 一個融合儒家、道家、法家、縱橫家等東方哲學的自適應 AI Agent 框架。
-> 七層感知網絡自動判斷「你是誰、你怎麼了、你需要什麼」，再決定用哪套思想回應。
+> **Languages:** [English](README.md) · [繁體中文](README.zh-TW.md)
 
-道樞讓 AI 像一位經驗豐富的幕僚：你不需要記任何指令、切換任何人格——情緒低落時它以道家順勢，遇人際難題它以儒家應對，談判博弈它以縱橫家謀劃，決策兩難時它召開內閣會議。所有輸出開頭標示 `【感知：XXX】`。
+**道樞 (Dàoshū, "Pivot of the Tao")** is a self-adaptive AI agent framework grounded in Eastern philosophy. A seven-layer perception network runs in the background to answer three questions about every input — *who are you, how are you, what do you need* — then decides which philosophical school should respond.
 
-## 特性
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](mcp)
+[![CI](https://github.com/ddg94360-code/daozhu/actions/workflows/test.yml/badge.svg)](https://github.com/ddg94360-code/daozhu/actions)
 
-- **七層感知網絡**：情緒、任務、人際、複雜度、精簡模式、語氣、精力——背景自動運作
-- **思想內閣四子**：儒家（外治/內修雙域）、道家（三階架構）、法家（雙域/三表/三階）、縱橫家（策書三式/開局三問）
-- **三大列席補丁**：兵家（嵌入縱橫家）、墨家（嵌入法家）、佛教（嵌入道家）
-- **七大技能模塊**：百工鑑（工作優化）、百師錄（虛擬大師）、弦外之音（音樂陪伴）、萬象心鏡（卦/塔羅/星盤/風水/星/夢/緣）、陰陽時令（節氣養生）、內閣會議（複雜決策）、技能路由（接入你自己的 skills）
-- **記憶層 MCP**：21 個工具——記帳、健康、提醒、採買、情緒日記、學習筆記、決策日誌、週報、精力分析、道藏（成功案例庫）、節氣計算
-- **本地優先**：記憶存於 `local_memory/` JSON，原子寫入防損壞，不上傳雲端
+Feeling low? It answers as Taoism (道家). Stuck with a person? Confucianism (儒家). Negotiating? Strategic School (縱橫家). Torn between options? It convenes a cabinet meeting. Every reply is prefixed with `【感知：XXX】` (perception tag).
 
-## 架構
+## Features
+
+- **Seven-layer perception network** — emotion, task, interpersonal, complexity, concise-mode, tone, energy — fully automatic in the background
+- **Cabinet of four schools** — Confucian (dual internal/external), Taoist (three-tier), Legalist (dual-domain / three-table), Strategist (opening-three-questions)
+- **Three advisory patches** — Military (embedded in Strategist), Mohist logic (in Legalist), Buddhist insight (in Taoist)
+- **Seven skill modules** — Work Guide, Virtual Masters, Music Companion, Metaphysical Mirror (hexagram/tarot/astrology/feng-shui/archetype/dream/oracle), Solar Terms, Cabinet Meeting, Skill Routing (hook in your own skills)
+- **Memory layer MCP** — 23 tools: expense, health, reminders, shopping, mood journal, study notes, decision log, weekly report, energy insight, strategy vault (道藏), solar-term calendar, CSV export, config
+- **Local-first** — memory stored in `local_memory/` as JSON, atomic writes prevent corruption, nothing leaves your machine
+
+## Architecture
 
 ```
-使用者輸入
+User input
     ▼
-┌─────────────────────────────────┐
-│  道樞感知網絡（自動駕駛 7 層）   │
-│  情緒 → 任務 → 人際 → 複雜度     │
-│  → 精簡模式 → 語氣 → 精力       │
-└─────────────────────────────────┘
+┌─────────────────────────────────────┐
+│  Perception Network (7 layers)      │
+│  emotion → task → interpersonal     │
+│  → complexity → concise → tone      │
+│  → energy                           │
+└─────────────────────────────────────┘
     ▼
-┌─────────────────────────────────┐
-│  技能調度層                      │
-│  思想內閣（四子＋三補丁）        │
-│  ＋ 七大技能模塊                 │
-└─────────────────────────────────┘
+┌─────────────────────────────────────┐
+│  Dispatch layer                     │
+│  Cabinet (4 schools + 3 patches)    │
+│  + 7 skill modules + routing        │
+└─────────────────────────────────────┘
     ▼
-┌─────────────────────────────────┐
-│  記憶層（daozhu-mcp · 21 工具）  │
-└─────────────────────────────────┘
+┌─────────────────────────────────────┐
+│  Memory layer (daozhu-mcp · 23 tools)│
+└─────────────────────────────────────┘
 ```
 
-## 安裝（Claude Code）
+## Installation (Claude Code)
 
-1. **複製 skill 到你的專案**：
+1. **Copy the skill and MCP server into your project:**
    ```bash
-   # 在你的專案根目錄
-   cp -r <此套件>/skills/daozhu .claude/skills/daozhu
-   cp -r <此套件>/mcp .claude/daozhu-mcp
+   cp -r skills/daozhu   <your-project>/.claude/skills/daozhu
+   cp -r mcp             <your-project>/.claude/daozhu-mcp
    ```
 
-2. **安裝 Python 依賴**（MCP 記憶層用）：
+2. **Install Python dependencies** (for the memory layer):
    ```bash
    pip install -r .claude/daozhu-mcp/requirements.txt
    ```
 
-3. **配置 MCP**：把 `.mcp.json.example` 內容放入你專案的 `.mcp.json`（repo 根）。
+3. **Configure MCP:** copy `.mcp.json.example` to `.mcp.json` at your project root and edit paths.
 
-4. **允許專案 MCP servers**：在你的 `.claude/settings.local.json` 加：
+4. **Trust the project MCP servers** — add to `.claude/settings.local.json`:
    ```json
    { "enableAllProjectMcpServers": true }
    ```
-   （在 VSCode extension 環境，Claude Code 只讀 repo 根的 `.mcp.json`，不是 `.claude/mcp.json`。）
+   > ⚠️ Note for VSCode extension environments: Claude Code reads the repo-root `.mcp.json`, **not** `.claude/mcp.json`.
 
-5. **在 CLAUDE.md 引用**（可選，建議）：
+5. **Optional:** reference it in your `CLAUDE.md`:
    ```markdown
-   所有對話由 `daozhu` skill（道樞）統一入口，見 `.claude/skills/daozhu/SKILL.md`。
+   All conversations are dispatched by the `daozhu` skill — see `.claude/skills/daozhu/SKILL.md`.
    ```
 
-6. **Reload Window**，輸入 `/mcp` 確認 daozhu 顯示 Connected。
+6. **Reload Window**, run `/mcp`, confirm `daozhu` shows **Connected**.
 
-## 快速開始
+## Quick Start
 
-| 你說 | 道樞會做 |
-|------|---------|
-| 「好煩」「累」「撐不下去」 | 道家＋佛教補丁，輸出【感知：情緒低落】 |
-| 「教授/老師/組員該怎麼應對」 | 儒家外治＋縱橫家輔 |
-| 「該不該接這個專案」（複雜） | 內閣會議五階段 |
-| 「幫我規劃學習進度」 | 百工鑑四階段（定策/立法/應變/養心） |
-| 「午餐吃了150」 | 記帳＋自動分類 |
-| 「今天好煩」 | 情緒日記＋分類＋連續低落偵測 |
-| 「這個星期過得如何」 | 週報＋精力洞察 |
-| 「系統狀態」 | 記憶庫健康檢查 |
+| You say | 道樞 does |
+|---------|-----------|
+| "I'm so frustrated / exhausted" | Taoism + Buddhist patch, `【感知：情緒低落】` |
+| "How do I deal with my professor/teammate" | Confucian external + Strategist |
+| "Should I take this project?" (complex) | Cabinet meeting (5 stages) |
+| "Help me plan my study schedule" | Work Guide (4 phases) |
+| "Lunch cost 150" | Expense log + auto-categorize |
+| "I'm feeling down today" | Mood journal + classification + streak detection |
+| "How was my week?" | Weekly report + energy insight |
+| "System status" | Memory-store health check |
 
-## 指令速查
+## Command Reference
 
-| 指令 | 功能 |
-|------|------|
-| `@儒家` / `@道家` / `@法家` / `@縱橫家` | 手動切換人格 |
-| `@會議 [問題]` | 強制內閣會議 |
-| `@工 [任務]` / `@工 急` / `@工 深` / `@工 程式` | 百工鑑工作優化 |
-| `@費曼` `@蘇格拉底` `@張愛玲` 等 | 百師錄召喚大師 |
-| `@[音樂家]` / `@播 [情境]` | 弦外之音音樂陪伴 |
-| `/卦` `/塔羅` `/星盤` `/風水` `/星` `/夢` `/緣` | 萬象心鏡七模式 |
-| `/節氣` | 當前節氣養生提醒 |
-| `/兵` `/辯` `/觀` | 強制兵家/墨家/佛教補丁 |
-| `/外治` `/內修` `/域` | 法家切換治域 |
-| `/藏` | 存入成功案例至道藏 |
-| `@快` / `@慢` | 精簡模式開關 |
+| Command | Function |
+|---------|----------|
+| `@儒家` / `@道家` / `@法家` / `@縱橫家` | Switch school manually |
+| `@會議 [question]` | Force a cabinet meeting |
+| `@工 [task]` / `@工 急` / `@工 深` / `@工 程式` | Work Guide |
+| `@費曼` `@蘇格拉底` `@張愛玲` … | Summon a virtual master |
+| `@[musician]` / `@播 [mood]` | Music companion |
+| `/卦` `/塔羅` `/星盤` `/風水` `/星` `/夢` `/緣` | Metaphysical mirror (7 modes) |
+| `/節氣` | Solar-term wellness reminder |
+| `/兵` `/辯` `/觀` | Force Military/Mohist/Buddhist patch |
+| `/外治` `/內修` `/域` | Legalist domain switch |
+| `/藏` | Save a strategy to the vault |
+| `@快` / `@慢` | Toggle concise mode |
 
-## 技能路由（接入你自己的 skills）
+## Routing to Your Own Skills
 
-道樞感知到**明確創作/開發類**請求時，依 `skills/daozhu/workflows/routing-workflow.md` 路由到你專案已有的 skills
-（寫作、遊戲、網站、除錯…）。被路由的技能就是道樞的技能模塊——由道樞感知後交付，不改變其內部流程。
-沒有對應技能時，道樞退回內閣回應。
+When the perception network detects an explicit **creation/development** request, it routes to your project's existing skills (writing, game dev, web, debugging…) per `skills/daozhu/workflows/routing-workflow.md`. Routed skills become 道樞's own modules — handed off with perception context, their internal flow untouched. If no matching skill exists, the cabinet responds instead.
 
-## 記憶庫結構（`local_memory/`）
+## Memory Layout (`local_memory/`)
 
 ```
 local_memory/
-├── daily/          # 記帳、健康、提醒、採買、情緒日記、學習筆記、決策日誌
-└── daozang/        # 各人格成功策略案例庫（道藏）
+├── daily/          # expenses, health, reminders, shopping, moods, notes, decisions
+└── daozang/        # per-school strategy vault
 ```
 
-## 開發
+## Configuration (`config.yaml`, optional)
+
+Copy `mcp/config.yaml.example` to `mcp/config.yaml` to override:
+- `timezone` — display timezone
+- `currency` — expense currency symbol (`TWD`/`HKD`/`USD`/`JPY`/`CNY`/`EUR`/`GBP`/`KRW`)
+- `review_weekday` / `review_time` — weekly-report schedule
+- `energy_analysis_days` — days needed before energy analysis is produced
+- `high_speed_threshold` — concise-mode trigger threshold (words/min, used by the dispatch layer)
+
+`yaml` is an optional dependency — without it, defaults are used silently.
+
+## Development
 
 ```bash
 cd mcp
 pip install -r requirements.txt
-python -m pytest tests/          # 跑測試
-python server.py                 # 啟動 MCP server（stdio）
+python -m pytest tests/          # 31 tests across 4 suites
+python server.py                 # run MCP server over stdio
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-[Apache License 2.0](LICENSE)
+[Apache License 2.0](LICENSE) — see [NOTICE](NOTICE) for the project authors.

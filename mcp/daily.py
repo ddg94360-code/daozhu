@@ -3,10 +3,13 @@
 儲存格式對應道樞建置文件第九章/第十五章規格（截斷處已補全）。
 所有時間欄位為 ISO 8601，統一由 memory_store.now() 產生。
 """
+import csv
+import io
 import uuid
 from datetime import datetime, timedelta
 
 import memory_store as store
+import config
 
 now = store.now
 
@@ -21,7 +24,7 @@ def log_expense(item: str, amount: float, category: str = "") -> dict:
     rec = {"date": now(), "category": cat, "item": item, "amount": round(float(amount), 2)}
     _, records = store.append("expenses", rec)
     total = round(sum(r["amount"] for r in records), 2)
-    return {"record": rec, "total": total}
+    return {"record": rec, "total": total, "currency": config.currency_symbol()}
 
 
 def _guess_category(item: str) -> str:
@@ -44,15 +47,40 @@ def month_expense_summary() -> dict:
             cat = r.get("category", "其他")
             cats[cat] = cats.get(cat, 0) + r["amount"]
     return {"month": month, "total": round(sum(cats.values()), 2),
-            "by_category": {k: round(v, 2) for k, v in cats.items()}}
+            "by_category": {k: round(v, 2) for k, v in cats.items()},
+            "currency": config.currency_symbol()}
+
+
+def export_expenses_csv(month: str = "") -> str:
+    """匯出指定月份（預設本月）記帳為 CSV 文字。"""
+    month = month or datetime.now().strftime("%Y-%m")
+    records = [r for r in store.all_records("expenses") if r.get("date", "").startswith(month)]
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(["date", "category", "item", "amount", "currency"])
+    for r in records:
+        writer.writerow([r.get("date", ""), r.get("category", "其他"),
+                         r.get("item", ""), r["amount"], config.currency_symbol()])
+    return buf.getvalue()
 
 
 # ---------------------------------------------------------------- 健康
 def log_health(sleep_hours: float = 0, exercise: str = "", water: str = "") -> dict:
-    """健康打卡：睡眠時數、運動、飲水。"""
+    """健康打卡：睡眠時數、運動、飲水。回傳連續達成天數。"""
     rec = {"date": now(), "sleep_hours": float(sleep_hours), "exercise": exercise, "water": water}
     store.append("health", rec)
-    return {"record": rec}
+    return {"record": rec, "consecutive_days": _consecutive_health_days()}
+
+
+def _consecutive_health_days() -> int:
+    """連續達成天數：從最新往回，有睡眠或運動紀錄的天算連續。"""
+    seen: set[str] = set()
+    for r in reversed(store.all_records("health")):
+        if r.get("sleep_hours", 0) > 0 or r.get("exercise", ""):
+            seen.add(r["date"][:10])
+        else:
+            break
+    return len(seen)
 
 
 # ---------------------------------------------------------------- 提醒

@@ -11,6 +11,7 @@ import daily
 import weekly
 import daozang
 import solarterm
+import config
 
 mcp = FastMCP("daozhu")
 
@@ -18,6 +19,7 @@ _TOOLS = {
     # ---- 日用集：記帳
     "daozhu_log_expense": daily.log_expense,
     "daozhu_month_expense_summary": daily.month_expense_summary,
+    "daozhu_export_expenses_csv": daily.export_expenses_csv,
     # ---- 健康
     "daozhu_log_health": daily.log_health,
     # ---- 提醒
@@ -46,6 +48,8 @@ _TOOLS = {
     "daozhu_daozang_recall": daozang.recall,
     # ---- 陰陽時令
     "daozhu_solar_term": solarterm.current_solar_term,
+    # ---- 設定
+    "daozhu_config_show": config.load,
 }
 
 for _name, _fn in _TOOLS.items():

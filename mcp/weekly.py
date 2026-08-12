@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 import memory_store as store
 import daily
+import config
 
 
 def _week_bounds() -> tuple:
@@ -37,8 +38,7 @@ def weekly_report() -> dict:
     decisions = [r for r in store.all_records("decisions")
                  if cutoff <= r.get("timestamp", "")[:10] <= today]
 
-    all_mood_records = store.all_records("mood_log")
-    consecutive_negative = daily._consecutive_negative_days(all_mood_records)
+    consecutive_negative = daily._consecutive_negative_days(moods)
 
     return {
         "period": f"{cutoff} ~ {today}",
@@ -49,8 +49,9 @@ def weekly_report() -> dict:
         "study_notes_added": len(notes),
         "study_notes_due": len(due),
         "decisions_logged": len(decisions),
-        "energy_insight": _energy_insight(all_mood_records),
+        "energy_insight": _energy_insight(moods),
         "care_flag": consecutive_negative >= 3,
+        "currency": config.currency_symbol(),
     }
 
 

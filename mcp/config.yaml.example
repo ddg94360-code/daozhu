@@ -1,0 +1,9 @@
+# 道樞設定範例 — 複製為 config.yaml 於 daozhu-mcp 目錄後生效
+# 所有欄位皆為可選，省略則用預設值。
+daozhu:
+  timezone: "Asia/Taipei"     # 顯示時區（ISO 名稱）
+  currency: "TWD"             # 記帳貨幣代碼：TWD/HKD/USD/JPY/CNY/EUR/GBP/KRW
+  review_weekday: 6           # 週報日：0=週一 ... 6=週日
+  review_time: "21:00"        # 週報輸出時間（24h）
+  energy_analysis_days: 7     # 精力分析所需累積天數
+  high_speed_threshold: 80    # 精簡模式觸發門檻（字/分鐘，供調度層用）
