@@ -8,8 +8,8 @@ import io
 import uuid
 from datetime import datetime, timedelta
 
-import memory_store as store
 import config
+import memory_store as store
 
 now = store.now
 
@@ -94,6 +94,22 @@ def add_reminder(content: str, datetime_str: str, recurring: bool = False) -> di
 
 def pending_reminders() -> list:
     return [r for r in store.all_records("reminders") if not r.get("done", False)]
+
+
+def due_reminders() -> list:
+    """回傳到期（datetime 已到）且未完成的提醒。供對話開始時自動檢查。"""
+    now_iso = datetime.now().isoformat(timespec="seconds")
+    return [r for r in store.all_records("reminders")
+            if not r.get("done", False) and r.get("datetime", "") <= now_iso]
+
+
+def mark_reminder_done(reminder_id: str) -> dict:
+    """標記某提醒為已完成（by id）。"""
+    removed = store.filter_replace(
+        "reminders",
+        lambda r: not (r.get("id") == reminder_id and not r.get("done", False)),
+    )
+    return {"matched": removed > 0}
 
 
 # ---------------------------------------------------------------- 採買

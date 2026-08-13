@@ -7,10 +7,10 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import daily
-import weekly
 import config
+import daily
 import solarterm
+import weekly
 
 
 @pytest.fixture(autouse=True)

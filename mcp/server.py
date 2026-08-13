@@ -7,11 +7,12 @@
 """
 from mcp.server.fastmcp import FastMCP
 
-import daily
-import weekly
-import daozang
-import solarterm
 import config
+import daily
+import daozang
+import memory_store
+import solarterm
+import weekly
 
 mcp = FastMCP("daozhu")
 
@@ -25,6 +26,8 @@ _TOOLS = {
     # ---- 提醒
     "daozhu_add_reminder": daily.add_reminder,
     "daozhu_pending_reminders": daily.pending_reminders,
+    "daozhu_due_reminders": daily.due_reminders,
+    "daozhu_mark_reminder_done": daily.mark_reminder_done,
     # ---- 採買
     "daozhu_add_shopping": daily.add_shopping,
     "daozhu_list_shopping": daily.list_shopping,
@@ -43,6 +46,7 @@ _TOOLS = {
     # ---- 週報與狀態
     "daozhu_weekly_report": weekly.weekly_report,
     "daozhu_status": weekly.status,
+    "daozhu_backup": memory_store.export_all,
     # ---- 道藏（成功案例）
     "daozhu_daozang_store": daozang.store,
     "daozhu_daozang_recall": daozang.recall,

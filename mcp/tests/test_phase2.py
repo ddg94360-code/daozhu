@@ -2,10 +2,8 @@
 
 記憶庫隔離 fixture 見 conftest.py。
 """
-import os
 from datetime import datetime
 
-import memory_store as store
 import daozang
 import solarterm
 

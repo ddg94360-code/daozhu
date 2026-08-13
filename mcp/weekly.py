@@ -2,9 +2,9 @@
 from collections import Counter
 from datetime import datetime, timedelta
 
-import memory_store as store
-import daily
 import config
+import daily
+import memory_store as store
 
 
 def _week_bounds() -> tuple:

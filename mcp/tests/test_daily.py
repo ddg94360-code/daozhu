@@ -4,8 +4,8 @@
 """
 import os
 
-import memory_store as store
 import daily
+import memory_store as store
 import weekly
 
 

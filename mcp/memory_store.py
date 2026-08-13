@@ -7,6 +7,7 @@ import json
 import os
 from datetime import datetime
 
+
 # 記憶庫根目錄。惰性讀取，測試可用 DAOZHU_MEMORY_DIR 覆蓋。
 def base_dir() -> str:
     return os.environ.get(
@@ -94,3 +95,37 @@ def filter_replace(name: str, keep_predicate, subdir: str = "daily") -> int:
     if len(kept) != len(records):
         _write_all(name, kept, subdir)
     return len(records) - len(kept)
+
+
+# ---------------------------------------------------------------- 整庫備份 / 還原
+
+_COLLECTIONS = ["expenses", "health", "reminders", "shopping", "mood_log", "study_notes", "decisions"]
+
+
+def export_all() -> dict:
+    """備份整庫：daily 各集合 + daozang 各人格，回傳可 JSON 序列化之 dict。
+
+    匯出不含損壞備份檔（*.corrupt）。用於「記憶逃生艙」。
+    """
+    data = {"daily": {name: _read_all(name, "daily") for name in _COLLECTIONS}}
+    dz_dir = os.path.join(base_dir(), "daozang")
+    data["daozang"] = {}
+    if os.path.isdir(dz_dir):
+        for f in sorted(os.listdir(dz_dir)):
+            if f.endswith(".json") and not f.endswith(".corrupt"):
+                data["daozang"][f[:-5]] = _read_all(f[:-5], "daozang")
+    return data
+
+
+def import_all(data: dict) -> int:
+    """從 export_all 產生的 dict 還原整庫，回傳還原之集合數。"""
+    count = 0
+    for name, records in (data.get("daily") or {}).items():
+        if isinstance(records, list):
+            _write_all(name, records, "daily")
+            count += 1
+    for persona, records in (data.get("daozang") or {}).items():
+        if isinstance(records, list):
+            _write_all(persona, records, "daozang")
+            count += 1
+    return count
