@@ -1,0 +1,10 @@
+{
+  "source": "此啟示源於塔羅象徵系統，僅作心境映照，非命定預言",
+  "cards": [
+    {"phase": "過 去", "img": "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_00_Fool.jpg", "en": "The Fool", "desc": "一張白紙，一襲行囊，站在崖邊卻面帶笑意。不帶包袱的開始。", "tip": "無畏地邁出第一步"},
+    {"phase": "現 在", "img": "https://commons.wikimedia.org/wiki/Special:FilePath/Eight%20of%20Wands%20(Rider-Waite%20Smith%20tarot%20deck).png", "en": "Eight of Wands", "desc": "八根權杖劃過天際，齊頭並進——行動已在途中、消息正在傳播。", "tip": "讓它飛，或讓幾根落地歇息"},
+    {"phase": "未 來", "img": "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_17_Star.jpg", "en": "The Star", "desc": "月落星現，水自瓶中傾注——不是流星，是夜空裡安靜的指引。", "tip": "真正的持續，來自不勉強"}
+  ],
+  "delays": [400, 1500, 2700],
+  "verdict": "愚者啟程，權杖八奔行，最後停駐於星星——旅程的收束不在名氣，而在你玩得開心，光自然亮著。"
+}

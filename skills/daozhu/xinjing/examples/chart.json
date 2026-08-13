@@ -1,0 +1,13 @@
+{
+  "source": "此星象敘事源於占星學『行星原型』，僅作當下課題之鏡",
+  "planets": [
+    {"name": "太陽", "sym": "☉", "ring": 2, "deg": 30,  "color": "#ffd9a0", "hl": true,  "meaning": "核心自我"},
+    {"name": "月亮", "sym": "☽", "ring": 3, "deg": 150, "color": "#a8c4ff", "meaning": "情緒直覺"},
+    {"name": "水星", "sym": "☿", "ring": 1, "deg": 90,  "color": "#9be8b8", "meaning": "溝通學習"},
+    {"name": "金星", "sym": "♀", "ring": 3, "deg": 240, "color": "#ffb8d8", "meaning": "關係美感"},
+    {"name": "火星", "sym": "♂", "ring": 2, "deg": 300, "color": "#ff8a8a", "meaning": "行動鬥志"},
+    {"name": "木星", "sym": "♃", "ring": 4, "deg": 45,  "color": "#c8a0ff", "meaning": "擴張信念"},
+    {"name": "土星", "sym": "♄", "ring": 4, "deg": 200, "color": "#d8c8a0", "meaning": "結構責任"}
+  ],
+  "summary": "太陽立身、月亮守心——此役的核心在於：知道自己是誰，並對自己的感受誠實。"
+}
