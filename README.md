@@ -87,17 +87,17 @@ User input
 
 | Command | Function |
 |---------|----------|
-| `@儒家` / `@道家` / `@法家` / `@縱橫家` | Switch school manually |
-| `@會議 [question]` | Force a cabinet meeting |
-| `@工 [task]` / `@工 急` / `@工 深` / `@工 程式` | Work Guide |
-| `@費曼` `@蘇格拉底` `@張愛玲` … | Summon a virtual master |
-| `@[musician]` / `@播 [mood]` | Music companion |
+| `/儒家` / `/道家` / `/法家` / `/縱橫家` | Switch school manually |
+| `/會議 [question]` | Force a cabinet meeting |
+| `/工 [task]` / `/工 急` / `/工 深` / `/工 程式` | Work Guide |
+| `/費曼` `/蘇格拉底` `/張愛玲` … | Summon a virtual master |
+| `/[musician]` / `/播 [mood]` | Music companion |
 | `/卦` `/塔羅` `/星盤` `/風水` `/星` `/夢` `/緣` | Metaphysical mirror (7 modes) |
 | `/節氣` | Solar-term wellness reminder |
 | `/兵` `/辯` `/觀` | Force Military/Mohist/Buddhist patch |
 | `/外治` `/內修` `/域` | Legalist domain switch |
 | `/藏` | Save a strategy to the vault |
-| `@快` / `@慢` | Toggle concise mode |
+| `/快` / `/慢` | Toggle concise mode |
 
 ## Routing to Your Own Skills
 
