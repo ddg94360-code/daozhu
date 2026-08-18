@@ -84,14 +84,152 @@ def test_reminders_mark_due(client, isolated_memory, monkeypatch):
     assert recs["未來"]["due"] is False
 
 
-def test_notes_are_read_only_shape(client, isolated_memory, monkeypatch):
+def test_notes_create_review_delete(client, isolated_memory, monkeypatch):
     monkeypatch.setattr(store, "_wall_clock", lambda: datetime.fromisoformat("2026-08-18T12:00:00"))
-    daily.add_study_note("物理", "熵增", review_days=0)
-    r = client.get("/api/notes")
+    r = client.post("/api/notes", json={"subject": "物理", "content": "熵增", "review_days": 0})
     assert r.status_code == 200
-    assert len(r.json()["due"]) == 1
-    post = client.post("/api/notes", json={"subject": "x", "content": "y"})
-    assert post.status_code in (404, 405)
+    rec = r.json()["record"]
+    assert rec["id"]
+    assert rec["subject"] == "物理"
+    listed = client.get("/api/notes").json()
+    assert len(listed["due"]) == 1
+    assert listed["due"][0]["id"] == rec["id"]
+    done = client.post(f"/api/notes/{rec['id']}/reviewed")
+    assert done.status_code == 200
+    assert client.get("/api/notes").json()["due"] == []
+    deleted = client.delete(f"/api/notes/{rec['id']}")
+    assert deleted.status_code == 200
+    assert client.get("/api/notes").json()["recent"] == []
+
+
+def test_notes_missing_id_404(client):
+    assert client.post("/api/notes/deadbeef/reviewed").status_code == 404
+    assert client.delete("/api/notes/deadbeef").status_code == 404
+
+
+def test_notes_blank_400(client):
+    r = client.post("/api/notes", json={"subject": "", "content": "x"})
+    assert r.status_code == 400
+    assert r.json()["error"] == "invalid"
+
+
+def test_decision_roundtrip(client, isolated_memory):
+    r = client.post("/api/decisions", json={"topic": "是否接專案", "verdict": "接", "reason": "時程可行"})
+    assert r.status_code == 200
+    assert r.json()["record"]["verdict"] == "接"
+    listed = client.get("/api/decisions").json()["records"]
+    assert listed[0]["topic"] == "是否接專案"
+
+
+def test_decision_blank_400(client):
+    r = client.post("/api/decisions", json={"topic": "x", "verdict": ""})
+    assert r.status_code == 400
+
+
+def test_daozang_empty_ok(client, isolated_memory):
+    r = client.get("/api/daozang")
+    assert r.status_code == 200
+    body = r.json()["personae"]
+    assert set(body) == {"daoist", "strategist", "legalist", "confucian"}
+    assert body["daoist"]["records"] == []
+
+
+def test_perception_empty_disclaimer(client, isolated_memory):
+    r = client.get("/api/perception")
+    assert r.status_code == 200
+    body = r.json()
+    assert "真實對話" in body["disclaimer"]
+    keys = [x["key"] for x in body["layers"]]
+    assert keys == ["emotion", "task", "interpersonal", "complexity", "concise", "tone", "energy"]
+    assert all(x["on"] is False for x in body["layers"])
+
+
+def test_perception_lights_from_memory(client, isolated_memory, monkeypatch):
+    monkeypatch.setattr(store, "_wall_clock", lambda: datetime.fromisoformat("2026-08-18T12:00:00"))
+    daily.log_mood("今天好煩")
+    daily.add_study_note("物理", "熵增", review_days=0)
+    daily.log_decision("是否接", "接")
+    body = client.get("/api/perception").json()
+    by = {x["key"]: x for x in body["layers"]}
+    assert by["emotion"]["on"] is True
+    assert "負向" in by["emotion"]["hint"]
+    assert by["task"]["on"] is True
+    assert by["complexity"]["on"] is True
+    assert by["interpersonal"]["on"] is False
+
+
+def test_cabinet_preview_interpersonal(client):
+    r = client.post("/api/cabinet/preview", json={"topic": "組員不做事該怎麼講"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["core"][0]["name"] == "儒家"
+    assert body["adjunct"][0]["name"] == "縱橫家"
+    assert len(body["stages"]) == 5
+    assert body["stages"][0]["body"] == ""
+
+
+def test_cabinet_preview_default(client):
+    r = client.post("/api/cabinet/preview", json={"topic": "隨便想一件事"})
+    assert r.status_code == 200
+    names = [x["name"] for x in r.json()["core"]]
+    assert names == ["儒家", "法家", "道家"]
+
+
+def test_cabinet_preview_blank_400(client):
+    r = client.post("/api/cabinet/preview", json={"topic": "  "})
+    assert r.status_code == 400
+
+
+def test_xinjing_example_and_render(client):
+    modes = client.get("/api/xinjing/examples")
+    assert modes.status_code == 200
+    assert "tarot" in modes.json()["modes"]
+    ex = client.get("/api/xinjing/examples/tarot")
+    assert ex.status_code == 200
+    assert "cards" in ex.json()
+    rendered = client.post("/api/xinjing/render", json={"mode": "tarot", "data": ex.json()})
+    assert rendered.status_code == 200
+    assert "text/html" in rendered.headers["content-type"]
+    assert "萬象心鏡" in rendered.text
+
+
+def test_xinjing_bad_payload(client):
+    bad_mode = client.post("/api/xinjing/render", json={"mode": "nope", "data": {}})
+    assert bad_mode.status_code == 400
+    bad_data = client.post("/api/xinjing/render", json={"mode": "tarot", "data": []})
+    assert bad_data.status_code == 400
+    missing = client.get("/api/xinjing/examples/nope")
+    assert missing.status_code == 404
+
+
+def test_missing_body_still_422(client):
+    r = client.post("/api/notes")
+    assert r.status_code == 422
+
+
+def test_internal_error_shape(client, monkeypatch):
+    import app as webapp
+
+    def boom():
+        raise RuntimeError("secret-stack")
+
+    monkeypatch.setattr(webapp.weekly, "status", boom)
+    r = client.get("/api/overview")
+    assert r.status_code == 500
+    body = r.json()
+    assert body["error"] == "internal"
+    assert body["message"] == "內部錯誤"
+    assert "secret-stack" not in r.text
+
+
+def test_cabinet_and_xinjing_pages(client):
+    cab = client.get("/cabinet")
+    xin = client.get("/xinjing")
+    assert cab.status_code == 200
+    assert xin.status_code == 200
+    assert "道樞" in cab.text
+    assert "道樞" in xin.text
+    assert "text/html" in cab.headers["content-type"]
 
 
 def test_expenses_csv(client, isolated_memory):

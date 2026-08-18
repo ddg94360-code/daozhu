@@ -9,29 +9,55 @@ from datetime import datetime
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import Body, FastAPI, Query, Request
+from fastapi import Body, FastAPI, HTTPException, Query, Request
+from fastapi.exception_handlers import http_exception_handler, request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 _REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _MCP = os.path.join(_REPO, "mcp")
-_STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+_WEB = os.path.dirname(os.path.abspath(__file__))
+_STATIC = os.path.join(_WEB, "static")
+_XINJING = os.path.join(_REPO, "skills", "daozhu", "xinjing")
+_XINJING_EXAMPLES = os.path.join(_XINJING, "examples")
+_XINJING_MODES = ("tarot", "gua", "yuan", "chart", "fengshui", "star", "dream")
 
 
 def _mcp_on_path() -> None:
-    if _MCP not in sys.path:
-        sys.path.insert(0, _MCP)
+    for p in (_WEB, _MCP, _XINJING):
+        if p not in sys.path:
+            sys.path.insert(0, p)
 
 
 _mcp_on_path()
 
 import config
 import daily
+import daozang
 import memory_store as store
 import solarterm
 import weekly
 
+import cabinet
+import perception
+
 app = FastAPI(title="道樞儀表板", docs_url=None, redoc_url=None)
+
+
+@app.exception_handler(HTTPException)
+async def _http_exc(request: Request, exc: HTTPException):
+    return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(RequestValidationError)
+async def _validation_exc(request: Request, exc: RequestValidationError):
+    return await request_validation_exception_handler(request, exc)
+
+
+@app.exception_handler(Exception)
+async def _internal_error(_request: Request, _exc: Exception) -> JSONResponse:
+    return JSONResponse({"error": "internal", "message": "內部錯誤"}, status_code=500)
 
 
 @app.middleware("http")
@@ -42,7 +68,10 @@ async def loopback_only(request: Request, call_next: Callable) -> Any:
             {"error": "forbidden", "message": "僅限本機存取"},
             status_code=403,
         )
-    return await call_next(request)
+    try:
+        return await call_next(request)
+    except Exception:
+        return JSONResponse({"error": "internal", "message": "內部錯誤"}, status_code=500)
 
 
 def _month_summary(month: str) -> dict:
@@ -223,9 +252,122 @@ def api_post_mood(body: dict = Body(...)) -> Any:
     return daily.log_mood(mood)
 
 
+@app.get("/api/decisions")
+def api_decisions() -> dict:
+    return {"records": daily.review_decisions()[:20]}
+
+
+@app.post("/api/decisions")
+def api_post_decision(body: dict = Body(...)) -> Any:
+    topic = str(body.get("topic", "")).strip()
+    verdict = str(body.get("verdict", "")).strip()
+    if not topic:
+        return _err("invalid", "題目不能空白", 400)
+    if not verdict:
+        return _err("invalid", "裁決不能空白", 400)
+    reason = str(body.get("reason") or "")
+    return daily.log_decision(topic, verdict, reason)
+
+
+@app.get("/api/daozang")
+def api_daozang() -> dict:
+    personae = {}
+    for name in daozang.PERSONAE:
+        personae[name] = daozang.recall(name)
+    return {"personae": personae}
+
+
+@app.get("/api/perception")
+def api_perception() -> dict:
+    return perception.infer()
+
+
+@app.post("/api/cabinet/preview")
+def api_cabinet_preview(body: dict = Body(...)) -> Any:
+    topic = str(body.get("topic", "")).strip()
+    if not topic:
+        return _err("invalid", "議題不能空白", 400)
+    return cabinet.preview(topic)
+
+
+@app.get("/api/xinjing/examples")
+def api_xinjing_modes() -> dict:
+    return {"modes": list(_XINJING_MODES)}
+
+
+@app.get("/api/xinjing/examples/{mode}")
+def api_xinjing_example(mode: str) -> Any:
+    if mode not in _XINJING_MODES:
+        return _err("not_found", "找不到這個心鏡模式", 404)
+    path = os.path.join(_XINJING_EXAMPLES, f"{mode}.json")
+    if not os.path.isfile(path):
+        return _err("not_found", "找不到示範資料", 404)
+    import json
+
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+@app.post("/api/xinjing/render")
+def api_xinjing_render(body: dict = Body(...)) -> Any:
+    mode = str(body.get("mode", "")).strip()
+    if mode not in _XINJING_MODES:
+        return _err("invalid", "模式須為七模式之一", 400)
+    data = body.get("data")
+    if not isinstance(data, dict):
+        return _err("invalid", "資料須為 JSON 物件", 400)
+    from xinjing_render import render
+
+    return Response(content=render(mode, data), media_type="text/html")
+
+
+@app.post("/api/notes")
+def api_post_note(body: dict = Body(...)) -> Any:
+    subject = str(body.get("subject", "")).strip()
+    content = str(body.get("content", "")).strip()
+    if not subject:
+        return _err("invalid", "科目不能空白", 400)
+    if not content:
+        return _err("invalid", "內容不能空白", 400)
+    raw_days = body.get("review_days", 7)
+    try:
+        review_days = int(raw_days)
+    except (TypeError, ValueError):
+        return _err("invalid", "複習天數須為大於或等於 0 的整數", 400)
+    if review_days < 0:
+        return _err("invalid", "複習天數須為大於或等於 0 的整數", 400)
+    return daily.add_study_note(subject, content, review_days)
+
+
+@app.post("/api/notes/{note_id}/reviewed")
+def api_note_reviewed(note_id: str) -> Any:
+    res = daily.mark_study_note_reviewed_by_id(note_id)
+    if not res.get("matched"):
+        return _err("not_found", "找不到這則筆記", 404)
+    return res
+
+
+@app.delete("/api/notes/{note_id}")
+def api_note_delete(note_id: str) -> Any:
+    res = daily.delete_study_note_by_id(note_id)
+    if not res.get("removed"):
+        return _err("not_found", "找不到這則筆記", 404)
+    return res
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(os.path.join(_STATIC, "index.html"))
+
+
+@app.get("/cabinet")
+def cabinet_page() -> FileResponse:
+    return FileResponse(os.path.join(_STATIC, "cabinet.html"))
+
+
+@app.get("/xinjing")
+def xinjing_page() -> FileResponse:
+    return FileResponse(os.path.join(_STATIC, "xinjing.html"))
 
 
 app.mount("/static", StaticFiles(directory=_STATIC), name="static")

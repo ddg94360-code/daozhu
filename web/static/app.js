@@ -26,7 +26,7 @@ function li(text, cls) {
 }
 
 async function refreshAll() {
-  const [ov, ex, he, re, sh, mo, no] = await Promise.all([
+  const [ov, ex, he, re, sh, mo, no, pe, de, dz] = await Promise.all([
     get("/api/overview"),
     get("/api/expenses"),
     get("/api/health"),
@@ -34,14 +34,20 @@ async function refreshAll() {
     get("/api/shopping"),
     get("/api/moods"),
     get("/api/notes"),
+    get("/api/perception"),
+    get("/api/decisions"),
+    get("/api/daozang"),
   ]);
   renderWeek(ov);
+  renderPerception(pe);
   renderExpenses(ex);
   renderHealth(he);
   renderReminders(re);
   renderShopping(sh);
   renderMoods(mo);
   renderNotes(no);
+  renderDecisions(de);
+  renderDaozang(dz);
 }
 
 function renderWeek(ov) {
@@ -145,8 +151,95 @@ function renderMoods(mo) {
 function renderNotes(no) {
   $("notes-due").replaceChildren();
   $("notes-recent").replaceChildren();
-  for (const rec of no.due || []) $("notes-due").appendChild(li(`到期　${rec.subject}　${rec.summary || rec.original}`));
-  for (const rec of no.recent || []) $("notes-recent").appendChild(li(`${rec.subject}　${rec.summary || rec.original}`));
+  for (const rec of no.due || []) $("notes-due").appendChild(noteRow(rec, true));
+  for (const rec of no.recent || []) $("notes-recent").appendChild(noteRow(rec, false));
+}
+
+function noteRow(rec, due) {
+  const text = due
+    ? `到期　${rec.subject}　${rec.summary || rec.original}`
+    : `${rec.subject}　${rec.summary || rec.original}`;
+  const row = li(text, due ? "due" : "");
+  if (!rec.id) return row;
+  if (due) {
+    const rev = document.createElement("button");
+    rev.type = "button";
+    rev.textContent = "複習";
+    rev.addEventListener("click", async () => {
+      try {
+        await send("POST", `/api/notes/${rec.id}/reviewed`);
+        $("note-err").textContent = "";
+        renderNotes(await get("/api/notes"));
+        renderWeek(await get("/api/overview"));
+        renderPerception(await get("/api/perception"));
+      } catch (e) {
+        $("note-err").textContent = e.message;
+      }
+    });
+    row.appendChild(rev);
+  }
+  const del = document.createElement("button");
+  del.type = "button";
+  del.textContent = "刪";
+  del.addEventListener("click", async () => {
+    try {
+      await send("DELETE", `/api/notes/${rec.id}`);
+      $("note-err").textContent = "";
+      renderNotes(await get("/api/notes"));
+      renderWeek(await get("/api/overview"));
+      renderPerception(await get("/api/perception"));
+    } catch (e) {
+      $("note-err").textContent = e.message;
+    }
+  });
+  row.appendChild(del);
+  return row;
+}
+
+function renderPerception(pe) {
+  const box = $("perception");
+  if (!box) return;
+  box.replaceChildren();
+  for (const layer of pe.layers || []) {
+    const el = document.createElement("span");
+    el.className = layer.on ? "layer on" : "layer";
+    el.textContent = layer.on && layer.hint ? `${layer.label}　${layer.hint}` : layer.label;
+    box.appendChild(el);
+  }
+  const disc = document.createElement("p");
+  disc.className = "disclaimer";
+  disc.textContent = pe.disclaimer || "";
+  box.appendChild(disc);
+}
+
+function renderDecisions(de) {
+  $("decision-list").replaceChildren();
+  for (const rec of de.records || []) {
+    const reason = rec.reason ? `　${rec.reason}` : "";
+    $("decision-list").appendChild(li(`${rec.timestamp}　${rec.topic}　${rec.verdict}${reason}`));
+  }
+}
+
+function renderDaozang(dz) {
+  const box = $("daozang");
+  box.replaceChildren();
+  const labels = { daoist: "道家", strategist: "縱橫家", legalist: "法家", confucian: "儒家" };
+  const personae = dz.personae || {};
+  for (const key of ["daoist", "confucian", "legalist", "strategist"]) {
+    const block = document.createElement("div");
+    block.className = "persona";
+    const h = document.createElement("h3");
+    h.textContent = labels[key] || key;
+    block.appendChild(h);
+    const ul = document.createElement("ul");
+    const recs = (personae[key] && personae[key].records) || [];
+    if (!recs.length) ul.appendChild(li("（空）"));
+    for (const rec of recs) {
+      ul.appendChild(li(`${rec.classify || ""}　${rec.adopted_strategy || ""}`));
+    }
+    block.appendChild(ul);
+    box.appendChild(block);
+  }
 }
 
 function bindForm(formId, errId, handler) {
@@ -201,6 +294,29 @@ bindForm("mood-form", "mood-err", async (fd) => {
   $("mood-care").textContent = res.care_note || "";
   renderMoods(await get("/api/moods"));
   renderWeek(await get("/api/overview"));
+  renderPerception(await get("/api/perception"));
+});
+
+bindForm("note-form", "note-err", async (fd) => {
+  await send("POST", "/api/notes", {
+    subject: fd.get("subject"),
+    content: fd.get("content"),
+    review_days: Number(fd.get("review_days") || 7),
+  });
+  renderNotes(await get("/api/notes"));
+  renderWeek(await get("/api/overview"));
+  renderPerception(await get("/api/perception"));
+});
+
+bindForm("decision-form", "decision-err", async (fd) => {
+  await send("POST", "/api/decisions", {
+    topic: fd.get("topic"),
+    verdict: fd.get("verdict"),
+    reason: fd.get("reason") || "",
+  });
+  renderDecisions(await get("/api/decisions"));
+  renderWeek(await get("/api/overview"));
+  renderPerception(await get("/api/perception"));
 });
 
 refreshAll().catch((e) => { $("week").textContent = e.message; });

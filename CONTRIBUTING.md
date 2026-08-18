@@ -28,7 +28,7 @@ pip install -r mcp/requirements-web.txt
 python -m pytest web/tests/
 ```
 
-New HTTP routes must call `daily` / `weekly` / `solarterm` — never write `local_memory` JSON from `web/`.
+New HTTP routes must call `daily` / `weekly` / `solarterm` / `daozang` / `xinjing_render` — never write `local_memory` JSON from `web/`. Cabinet seating and perception lights are pure functions.
 
 ## Code style
 

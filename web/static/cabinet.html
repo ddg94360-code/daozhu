@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>道樞 · 內閣</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="vignette"></div>
+  <header>
+    <div class="title">道樞</div>
+    <nav class="nav">
+      <a href="/">看板</a>
+      <a href="/cabinet" aria-current="page">內閣</a>
+      <a href="/xinjing">心鏡</a>
+    </nav>
+  </header>
+  <main>
+    <section class="card">
+      <h2>議題</h2>
+      <form id="cabinet-form">
+        <textarea name="topic" placeholder="組員不做事該怎麼講" required></textarea>
+        <button type="submit">排出席</button>
+      </form>
+      <p class="err" id="cabinet-err"></p>
+      <p class="hint" id="cabinet-disc"></p>
+    </section>
+    <section class="card">
+      <h2>出席</h2>
+      <p id="cabinet-rule"></p>
+      <p id="cabinet-chair"></p>
+      <ul id="cabinet-core"></ul>
+      <ul id="cabinet-adjunct"></ul>
+    </section>
+    <section class="card" id="cabinet-stages">
+      <h2>五階段</h2>
+    </section>
+  </main>
+  <script src="/static/cabinet.js"></script>
+</body>
+</html>

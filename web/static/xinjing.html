@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>道樞 · 心鏡</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="vignette"></div>
+  <header>
+    <div class="title">道樞</div>
+    <nav class="nav">
+      <a href="/">看板</a>
+      <a href="/cabinet">內閣</a>
+      <a href="/xinjing" aria-current="page">心鏡</a>
+    </nav>
+  </header>
+  <main>
+    <section class="card">
+      <h2>萬象心鏡</h2>
+      <p class="hint">只播放 JSON。不算卦、不抽牌。日後可接真計算 skill。</p>
+      <form id="xinjing-form">
+        <select name="mode" id="xinjing-mode">
+          <option>tarot</option>
+          <option>gua</option>
+          <option>yuan</option>
+          <option>chart</option>
+          <option>fengshui</option>
+          <option>star</option>
+          <option>dream</option>
+        </select>
+        <button type="button" id="xinjing-example">載入示範</button>
+        <button type="submit">播放</button>
+        <textarea name="data" id="xinjing-data" placeholder='{"source":"…"}'></textarea>
+      </form>
+      <p class="err" id="xinjing-err"></p>
+    </section>
+    <iframe id="xinjing-stage" title="心鏡舞台" sandbox="allow-scripts"></iframe>
+  </main>
+  <script src="/static/xinjing.js"></script>
+</body>
+</html>

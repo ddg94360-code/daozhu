@@ -212,8 +212,8 @@ def add_study_note(subject: str, content: str, review_days: int = 7) -> dict:
     """學習筆記：自動分類、超長自動摘要、排定複習日期。"""
     summary = content if len(content) <= 50 else content[:50] + "…"
     review_date = (datetime.fromisoformat(now()) + timedelta(days=int(review_days))).isoformat(timespec="seconds")
-    rec = {"date": now(), "subject": subject, "original": content, "summary": summary,
-           "review_date": review_date, "reviewed": False}
+    rec = {"id": uuid.uuid4().hex[:8], "date": now(), "subject": subject, "original": content,
+           "summary": summary, "review_date": review_date, "reviewed": False}
     store.append("study_notes", rec)
     return {"record": rec}
 
@@ -245,6 +245,22 @@ def delete_study_note(keyword: str) -> dict:
         "study_notes",
         lambda r: keyword not in r.get("original", "") and keyword not in r.get("subject", ""),
     )
+    return {"removed": removed}
+
+
+def mark_study_note_reviewed_by_id(note_id: str) -> dict:
+    """按 id 標記學習筆記為已複習，就地改 reviewed，不刪除。"""
+    n = store.map_update(
+        "study_notes",
+        lambda r: r.get("id") == note_id and not r.get("reviewed"),
+        lambda r: {**r, "reviewed": True},
+    )
+    return {"matched": n > 0}
+
+
+def delete_study_note_by_id(note_id: str) -> dict:
+    """按 id 刪除一則學習筆記。"""
+    removed = store.filter_replace("study_notes", lambda r: r.get("id") != note_id)
     return {"removed": removed}
 
 

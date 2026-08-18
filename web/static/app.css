@@ -33,5 +33,18 @@ button { cursor: pointer; color: #9b8cff; }
 .due { color: #e08a8a; }
 .hint { font-size: .7rem; color: #6f6394; margin-top: .4rem; }
 a { color: #9b8cff; font-size: .75rem; }
+.nav { display: flex; gap: 1rem; margin-top: .7rem; }
+.nav a { letter-spacing: .2em; text-decoration: none; }
+.nav a[aria-current="page"] { border-bottom: 1px solid #9b8cff; }
+.perception { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .7rem; align-items: center; }
+.layer { font-size: .68rem; letter-spacing: .12em; color: #5c5a80; border: 1px solid #3a2f66; border-radius: 999px; padding: .15rem .5rem; }
+.layer.on { color: #9b8cff; border-color: #9b8cff; }
+.disclaimer { font-size: .65rem; color: #5c5a80; flex-basis: 100%; }
+.stage-card { min-height: 4.2rem; margin-top: .5rem; }
+.stage-card .who { font-size: .68rem; color: #6f6394; }
+#xinjing-stage { width: 100%; min-height: 70vh; border: 1px solid #3a2f66; border-radius: 14px; background: #0d0a1a; }
+textarea { width: 100%; min-height: 8rem; background: #0d0a1a; color: #e8e0ff; border: 1px solid #3a2f66; border-radius: 6px; padding: .5rem; font: inherit; }
+.persona { margin-top: .5rem; }
+.persona h3 { font-size: .75rem; color: #6f6394; letter-spacing: .15em; }
 li button { margin-left: .4rem; }
 #expense-summary { font-size: .8rem; margin-bottom: .4rem; }

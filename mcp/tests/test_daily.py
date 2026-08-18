@@ -86,6 +86,39 @@ def test_delete_study_note(isolated_memory):
     assert daily.list_study_notes() == []
 
 
+def test_add_study_note_has_id(isolated_memory):
+    rec = daily.add_study_note("物理", "熵增")["record"]
+    assert rec["id"]
+    assert len(rec["id"]) == 8
+
+
+def test_mark_study_note_reviewed_by_id_only_touches_that_row(isolated_memory):
+    a = daily.add_study_note("物理", "熵增")["record"]
+    b = daily.add_study_note("物理", "焓變")["record"]
+    assert daily.mark_study_note_reviewed_by_id(a["id"])["matched"] is True
+    notes = {r["id"]: r for r in store.all_records("study_notes")}
+    assert notes[a["id"]]["reviewed"] is True
+    assert notes[b["id"]]["reviewed"] is False
+
+
+def test_mark_study_note_reviewed_by_id_missing_or_already(isolated_memory):
+    rec = daily.add_study_note("歷史", "法國大革命")["record"]
+    assert daily.mark_study_note_reviewed_by_id("no-such")["matched"] is False
+    assert daily.mark_study_note_reviewed_by_id(rec["id"])["matched"] is True
+    assert daily.mark_study_note_reviewed_by_id(rec["id"])["matched"] is False
+    assert len(store.all_records("study_notes")) == 1
+
+
+def test_delete_study_note_by_id_only_deletes_that_row(isolated_memory):
+    a = daily.add_study_note("數學", "傅立葉")["record"]
+    b = daily.add_study_note("數學", "拉普拉斯")["record"]
+    assert daily.delete_study_note_by_id(a["id"])["removed"] == 1
+    left = store.all_records("study_notes")
+    assert len(left) == 1
+    assert left[0]["id"] == b["id"]
+    assert daily.delete_study_note_by_id("no-such")["removed"] == 0
+
+
 # ---------------------------------------------------------------- 週報
 def test_weekly_report_structure(isolated_memory):
     daily.log_expense("早餐", 60)
