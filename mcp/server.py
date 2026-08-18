@@ -41,6 +41,7 @@ _TOOLS = {
     "daozhu_add_study_note": daily.add_study_note,
     "daozhu_list_study_notes": daily.list_study_notes,
     "daozhu_due_study_notes": daily.due_study_notes,
+    "daozhu_mark_study_note_reviewed": daily.mark_study_note_reviewed,
     "daozhu_delete_study_note": daily.delete_study_note,
     # ---- 決策日誌
     "daozhu_log_decision": daily.log_decision,

@@ -40,7 +40,7 @@ def _guess_category(item: str) -> str:
 
 def month_expense_summary() -> dict:
     """本月支出摘要（依 category 聚合）。"""
-    month = datetime.now().strftime("%Y-%m")
+    month = now()[:7]
     cats: dict[str, float] = {}
     for r in store.all_records("expenses"):
         if r.get("date", "").startswith(month):
@@ -53,7 +53,7 @@ def month_expense_summary() -> dict:
 
 def export_expenses_csv(month: str = "") -> str:
     """匯出指定月份（預設本月）記帳為 CSV 文字。"""
-    month = month or datetime.now().strftime("%Y-%m")
+    month = month or now()[:7]
     records = [r for r in store.all_records("expenses") if r.get("date", "").startswith(month)]
     buf = io.StringIO()
     writer = csv.writer(buf)
@@ -73,14 +73,26 @@ def log_health(sleep_hours: float = 0, exercise: str = "", water: str = "") -> d
 
 
 def _consecutive_health_days() -> int:
-    """連續達成天數：從最新往回，有睡眠或運動紀錄的天算連續。"""
-    seen: set[str] = set()
+    """連續達成天數：從最新往回，有睡眠或運動紀錄且日曆相鄰的天算連續。"""
+    days: list[str] = []
     for r in reversed(store.all_records("health")):
         if r.get("sleep_hours", 0) > 0 or r.get("exercise", ""):
-            seen.add(r["date"][:10])
+            d = r["date"][:10]
+            if not days or days[-1] != d:
+                days.append(d)
         else:
             break
-    return len(seen)
+    if not days:
+        return 0
+    streak = 1
+    for i in range(1, len(days)):
+        newer = datetime.fromisoformat(days[i - 1]).date()
+        older = datetime.fromisoformat(days[i]).date()
+        if (newer - older).days == 1:
+            streak += 1
+        else:
+            break
+    return streak
 
 
 # ---------------------------------------------------------------- 提醒
@@ -98,18 +110,19 @@ def pending_reminders() -> list:
 
 def due_reminders() -> list:
     """回傳到期（datetime 已到）且未完成的提醒。供對話開始時自動檢查。"""
-    now_iso = datetime.now().isoformat(timespec="seconds")
+    now_iso = now()
     return [r for r in store.all_records("reminders")
             if not r.get("done", False) and r.get("datetime", "") <= now_iso]
 
 
 def mark_reminder_done(reminder_id: str) -> dict:
-    """標記某提醒為已完成（by id）。"""
-    removed = store.filter_replace(
+    """標記某提醒為已完成（by id），就地改 done，不刪除。"""
+    n = store.map_update(
         "reminders",
-        lambda r: not (r.get("id") == reminder_id and not r.get("done", False)),
+        lambda r: r.get("id") == reminder_id and not r.get("done", False),
+        lambda r: {**r, "done": True},
     )
-    return {"matched": removed > 0}
+    return {"matched": n > 0}
 
 
 # ---------------------------------------------------------------- 採買
@@ -124,9 +137,13 @@ def list_shopping() -> list:
 
 
 def check_shopping(item: str) -> dict:
-    """標記已購（模糊匹配 item）。"""
-    removed = store.filter_replace("shopping", lambda r: not (item in r["item"] and not r["checked"]))
-    return {"matched": removed > 0}
+    """標記已購（模糊匹配 item），就地改 checked，不刪除。"""
+    n = store.map_update(
+        "shopping",
+        lambda r: item in r["item"] and not r.get("checked", False),
+        lambda r: {**r, "checked": True},
+    )
+    return {"matched": n > 0}
 
 
 def remove_shopping(item: str) -> dict:
@@ -194,7 +211,7 @@ def _consecutive_negative_days(records: list | None = None) -> int:
 def add_study_note(subject: str, content: str, review_days: int = 7) -> dict:
     """學習筆記：自動分類、超長自動摘要、排定複習日期。"""
     summary = content if len(content) <= 50 else content[:50] + "…"
-    review_date = (datetime.now() + timedelta(days=int(review_days))).isoformat(timespec="seconds")
+    review_date = (datetime.fromisoformat(now()) + timedelta(days=int(review_days))).isoformat(timespec="seconds")
     rec = {"date": now(), "subject": subject, "original": content, "summary": summary,
            "review_date": review_date, "reviewed": False}
     store.append("study_notes", rec)
@@ -209,8 +226,18 @@ def list_study_notes(subject: str = "") -> list:
 
 
 def due_study_notes() -> list:
-    now_iso = datetime.now().isoformat(timespec="seconds")
+    now_iso = now()
     return [r for r in store.all_records("study_notes") if not r.get("reviewed") and r.get("review_date", "") <= now_iso]
+
+
+def mark_study_note_reviewed(keyword: str) -> dict:
+    """標記學習筆記為已複習（模糊匹配 subject 或原文）。"""
+    n = store.map_update(
+        "study_notes",
+        lambda r: not r.get("reviewed") and (keyword in r.get("original", "") or keyword in r.get("subject", "")),
+        lambda r: {**r, "reviewed": True},
+    )
+    return {"matched": n > 0}
 
 
 def delete_study_note(keyword: str) -> dict:

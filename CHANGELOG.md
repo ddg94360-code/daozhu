@@ -4,9 +4,17 @@ All notable changes to 道樞 Dàoshū are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Fixed
+- `due_reminders` / monthly summaries / study-note review dates now share `memory_store.now()` (via `_wall_clock` seam). Tests freeze time by patching `_wall_clock`; the previous wall-clock leak made `test_due_reminders_filters_by_time` fail after 2026-08-14.
+- `mark_reminder_done` and `check_shopping` now update in place (`done` / `checked`) instead of deleting the record.
+- Health streak requires calendar-adjacent days (a skipped day breaks the streak).
+- Energy insight threshold reads `energy_analysis_days` from config instead of a hardcoded 7.
+
 ### Added
 - 本機記憶儀表板（`python -m web`，`127.0.0.1:8765`）：週報／支出／健康／提醒／採買／情緒可寫入，筆記只讀
 - `daily.check_shopping_by_id` / `daily.remove_shopping_by_id`（MCP：`daozhu_check_shopping_by_id` / `daozhu_remove_shopping_by_id`）
+- `memory_store.map_update` — in-place record transform (the missing primitive behind mark-done / check / reviewed).
+- `daozhu_mark_study_note_reviewed` — mark a study note as reviewed so it leaves the due list.
 - `config.py` — optional `config.yaml` support (`timezone`, `currency`, `review_weekday`, `review_time`, `energy_analysis_days`, `high_speed_threshold`), with `config.yaml.example`
 - `daozhu_export_expenses_csv` — export monthly expenses as CSV (auto-escapes commas)
 - `daozhu_config_show` — inspect the active configuration
@@ -15,7 +23,8 @@ All notable changes to 道樞 Dàoshū are documented here. Format follows [Keep
 - Weekly report reuses the already-fetched week's mood records for energy insight (one fewer file read)
 
 ### Tests
-- Expanded 20 → 31: CONFIG loading (defaults / from YAML / unknown keys / missing file), CSV export, health streak, weekly currency field, solar-term across 2025–2027 and the cross-year boundary
+- Expanded 20 → 42: CONFIG loading, CSV export, health calendar-adjacency, energy-insight config threshold, map_update, mark-done / check-shopping / mark-reviewed keep records, solar-term across 2025–2027 and the cross-year boundary
+- Dashboard: other-month expenses, list GETs, `/static` 200, loopback ignores `X-Forwarded-For`
 
 ### Docs
 - English README (`README.md`) + Traditional Chinese (`README.zh-TW.md`) with language switcher

@@ -14,14 +14,14 @@ Thanks for your interest in contributing! 道樞 is an Eastern-philosophy AI orc
 
 ```bash
 git clone https://github.com/ddg94360-code/daozhu.git
-cd daozhu/mcp
-pip install -r requirements.txt
-python -m pytest tests/    # all tests must pass
+cd daozhu
+pip install -r mcp/requirements.txt
+python -m pytest mcp/tests/    # all tests must pass
 ```
 
-The MCP server runs over stdio — `python server.py` and test with any MCP client, or call the underlying functions directly.
+The MCP server runs over stdio — `python mcp/server.py` (from the repo root, or `cd mcp && python server.py`) and test with any MCP client, or call the underlying functions directly.
 
-Optional dashboard:
+Optional dashboard (also from the repo root):
 
 ```bash
 pip install -r mcp/requirements-web.txt
@@ -32,7 +32,7 @@ New HTTP routes must call `daily` / `weekly` / `solarterm` — never write `loca
 
 ## Code style
 
-- **Python** (`mcp/`): type hints on every public function, a one-line docstring in Traditional Chinese, no dead code. Follow the existing module patterns (`memory_store` as the shared bottom layer; `daily`/`weekly`/`daozang`/`solarterm` as feature modules; `server` as a thin `_TOOLS` registry).
+- **Python** (`mcp/`): type hints on every public function, a one-line docstring in Traditional Chinese, no dead code. Follow the existing module patterns (`memory_store` as the shared bottom layer; `daily`/`weekly`/`daozang`/`solarterm` as feature modules; `server` as a thin `_TOOLS` registry). Freeze time in tests by patching `memory_store._wall_clock`, not `datetime.now` or the `daily.now` alias.
 - **Skill files** (`skills/`): Markdown specs, Traditional Chinese, one topic per file under `ministers/`, `patches/`, `modules/`, `workflows/`. Keep output-format sections imperative and concrete.
 
 ## Testing

@@ -96,7 +96,7 @@ def count(name: str, subdir: str = "daily") -> int:
     return len(_read_all(name, subdir))
 
 
-def filter_replace(name: str, keep_predicate, subdir: str = "daily") -> int:
+def filter_replace(name: str, keep_predicate: object, subdir: str = "daily") -> int:
     """讀取→過濾→覆寫，回傳被移除筆數。keep_predicate(r) -> bool 為保留條件。"""
     records = _read_all(name, subdir)
     kept = [r for r in records if keep_predicate(r)]
@@ -105,7 +105,7 @@ def filter_replace(name: str, keep_predicate, subdir: str = "daily") -> int:
     return len(records) - len(kept)
 
 
-def map_update(name: str, predicate, transform, subdir: str = "daily") -> int:
+def map_update(name: str, predicate: object, transform: object, subdir: str = "daily") -> int:
     """讀取→對符合條件的紀錄套用 transform→原子寫回。回傳改動筆數。"""
     records = _read_all(name, subdir)
     changed = 0

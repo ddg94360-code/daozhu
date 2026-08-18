@@ -50,8 +50,9 @@ def test_mood_classification(isolated_memory):
 
 def test_consecutive_negative_care_flag(isolated_memory, monkeypatch):
     # 跨 3 天各寫一筆負向，驗證「連續 3 天」觸發關心提示
+    from datetime import datetime
     for d in ["2026-08-10T10:00:00", "2026-08-11T10:00:00", "2026-08-12T10:00:00"]:
-        monkeypatch.setattr(daily, "now", lambda d=d: d)
+        monkeypatch.setattr(store, "_wall_clock", lambda d=d: datetime.fromisoformat(d))
         daily.log_mood("好煩")
     rec = daily.log_mood("壓力大")
     assert rec["consecutive_negative_days"] == 3  # 三個不同天

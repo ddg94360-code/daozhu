@@ -9,7 +9,7 @@ import memory_store as store
 
 def _week_bounds() -> tuple:
     """近 7 天窗口 (cutoff, today) 之 ISO 日期字串。"""
-    n = datetime.now()
+    n = datetime.fromisoformat(store.now())
     today = n.strftime("%Y-%m-%d")
     cutoff = (n - timedelta(days=6)).strftime("%Y-%m-%d")
     return cutoff, today
@@ -18,7 +18,7 @@ def _week_bounds() -> tuple:
 def weekly_report() -> dict:
     """週回顧：支出、睡眠、運動、情緒趨勢、學習筆記、精力洞察。"""
     cutoff, today = _week_bounds()
-    now_iso = datetime.now().isoformat(timespec="seconds")
+    now_iso = store.now()
 
     expenses = [r for r in store.all_records("expenses") if cutoff <= r["date"][:10] <= today]
     total_spend = round(sum(r["amount"] for r in expenses), 2)
@@ -58,7 +58,7 @@ def weekly_report() -> dict:
 def _energy_insight(mood_records: list) -> str:
     """精力洞察：依日誌時間戳分佈，找出活躍時段與低谷。
 
-    數據不足 7 筆時回傳引導語，不輸出假分析。
+    數據不足 ``energy_analysis_days``（預設 7）筆時回傳引導語，不輸出假分析。
     """
     hours = []
     for r in mood_records:
@@ -66,8 +66,9 @@ def _energy_insight(mood_records: list) -> str:
             hours.append(int(r.get("date", "")[11:13]))
         except (ValueError, IndexError):
             continue
-    if len(hours) < 7:
-        return "數據不足：需累積至少 7 天日誌才可產出精力分析。"
+    threshold = int(config.get("energy_analysis_days", 7))
+    if len(hours) < threshold:
+        return f"數據不足：需累積至少 {threshold} 天日誌才可產出精力分析。"
     peak = Counter(hours).most_common()
     top_hours = sorted(h for h, _ in peak[:3])
     bottom_hours = sorted(h for h, _ in peak[-2:])

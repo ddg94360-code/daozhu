@@ -157,3 +157,40 @@ def test_index_html(client):
     assert r.status_code == 200
     assert "text/html" in r.headers["content-type"]
     assert "道樞" in r.text
+
+
+def test_static_assets(client):
+    js = client.get("/static/app.js")
+    css = client.get("/static/app.css")
+    assert js.status_code == 200
+    assert css.status_code == 200
+    assert "javascript" in js.headers.get("content-type", "") or js.text.startswith("const $")
+    assert "refreshAll" in js.text
+
+
+def test_loopback_ignores_x_forwarded_for(client):
+    r = client.get("/api/healthz", headers={"X-Forwarded-For": "8.8.8.8"})
+    assert r.status_code == 200
+    assert r.json() == {"ok": True}
+
+
+def test_expenses_other_month_uses_app_summary(client, isolated_memory):
+    daily.log_expense("午餐", 150, "飲食")
+    r = client.get("/api/expenses", params={"month": "1999-01"})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["summary"]["month"] == "1999-01"
+    assert body["summary"]["total"] == 0
+    assert body["recent"] == []
+
+
+def test_health_and_moods_and_shopping_lists(client, isolated_memory):
+    daily.log_health(sleep_hours=7)
+    daily.log_mood("平靜")
+    daily.add_shopping("牛奶")
+    assert client.get("/api/health").status_code == 200
+    assert len(client.get("/api/health").json()["records"]) == 1
+    assert client.get("/api/moods").json()["records"][0]["mood"] == "平靜"
+    assert client.get("/api/shopping").json()["records"][0]["item"] == "牛奶"
+    clamped = client.get("/api/health", params={"limit": 1})
+    assert len(clamped.json()["records"]) == 1

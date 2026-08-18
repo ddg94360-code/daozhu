@@ -6,6 +6,9 @@ import sys
 
 from datetime import datetime
 
+from collections.abc import Callable
+from typing import Any
+
 from fastapi import Body, FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -32,7 +35,7 @@ app = FastAPI(title="道樞儀表板", docs_url=None, redoc_url=None)
 
 
 @app.middleware("http")
-async def loopback_only(request: Request, call_next):
+async def loopback_only(request: Request, call_next: Callable) -> Any:
     host = (request.client.host if request.client else "") or ""
     if host not in {"127.0.0.1", "::1", "testclient", "localhost"}:
         return JSONResponse(
@@ -138,7 +141,7 @@ def _err(code: str, message: str, status: int) -> JSONResponse:
 
 
 @app.post("/api/expenses")
-def api_post_expense(body: dict = Body(...)):
+def api_post_expense(body: dict = Body(...)) -> Any:
     item = str(body.get("item", "")).strip()
     if not item:
         return _err("invalid", "項目不能空白", 400)
@@ -153,7 +156,7 @@ def api_post_expense(body: dict = Body(...)):
 
 
 @app.post("/api/health")
-def api_post_health(body: dict = Body(...)):
+def api_post_health(body: dict = Body(...)) -> Any:
     sleep = body.get("sleep_hours", 0) or 0
     try:
         sleep_f = float(sleep)
@@ -167,7 +170,7 @@ def api_post_health(body: dict = Body(...)):
 
 
 @app.post("/api/reminders")
-def api_post_reminder(body: dict = Body(...)):
+def api_post_reminder(body: dict = Body(...)) -> Any:
     content = str(body.get("content", "")).strip()
     if not content:
         return _err("invalid", "提醒內容不能空白", 400)
@@ -181,7 +184,7 @@ def api_post_reminder(body: dict = Body(...)):
 
 
 @app.post("/api/reminders/{reminder_id}/done")
-def api_reminder_done(reminder_id: str):
+def api_reminder_done(reminder_id: str) -> Any:
     res = daily.mark_reminder_done(reminder_id)
     if not res.get("matched"):
         return _err("not_found", "找不到這則提醒", 404)
@@ -189,7 +192,7 @@ def api_reminder_done(reminder_id: str):
 
 
 @app.post("/api/shopping")
-def api_post_shopping(body: dict = Body(...)):
+def api_post_shopping(body: dict = Body(...)) -> Any:
     item = str(body.get("item", "")).strip()
     if not item:
         return _err("invalid", "項目不能空白", 400)
@@ -197,7 +200,7 @@ def api_post_shopping(body: dict = Body(...)):
 
 
 @app.post("/api/shopping/{item_id}/check")
-def api_shopping_check(item_id: str):
+def api_shopping_check(item_id: str) -> Any:
     res = daily.check_shopping_by_id(item_id)
     if not res.get("matched"):
         return _err("not_found", "找不到這筆採買", 404)
@@ -205,7 +208,7 @@ def api_shopping_check(item_id: str):
 
 
 @app.delete("/api/shopping/{item_id}")
-def api_shopping_delete(item_id: str):
+def api_shopping_delete(item_id: str) -> Any:
     res = daily.remove_shopping_by_id(item_id)
     if not res.get("removed"):
         return _err("not_found", "找不到這筆採買", 404)
@@ -213,7 +216,7 @@ def api_shopping_delete(item_id: str):
 
 
 @app.post("/api/moods")
-def api_post_mood(body: dict = Body(...)):
+def api_post_mood(body: dict = Body(...)) -> Any:
     mood = str(body.get("mood", "")).strip()
     if not mood:
         return _err("invalid", "情緒不能空白", 400)
@@ -221,7 +224,7 @@ def api_post_mood(body: dict = Body(...)):
 
 
 @app.get("/")
-def index():
+def index() -> FileResponse:
     return FileResponse(os.path.join(_STATIC, "index.html"))
 
 

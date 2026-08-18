@@ -16,7 +16,7 @@ Feeling low? It answers as Taoism (道家). Stuck with a person? Confucianism (�
 - **Cabinet of four schools** — Confucian (dual internal/external), Taoist (three-tier), Legalist (dual-domain / three-table), Strategist (opening-three-questions)
 - **Three advisory patches** — Military (embedded in Strategist), Mohist logic (in Legalist), Buddhist insight (in Taoist)
 - **Seven skill modules** — Work Guide, Virtual Masters, Music Companion, Metaphysical Mirror (hexagram/tarot/astrology/feng-shui/archetype/dream/oracle), Solar Terms, Cabinet Meeting, Skill Routing (hook in your own skills)
-- **Memory layer MCP** — 23 tools: expense, health, reminders, shopping, mood journal, study notes, decision log, weekly report, energy insight, strategy vault (道藏), solar-term calendar, CSV export, config
+- **Memory layer MCP** — 27 tools: expense, health, reminders, shopping, mood journal, study notes (incl. mark-reviewed), decision log, weekly report, energy insight, strategy vault (道藏), solar-term calendar, CSV export, config
 - **Local-first** — memory stored in `local_memory/` as JSON, atomic writes prevent corruption, nothing leaves your machine
 
 ## Architecture
@@ -38,7 +38,7 @@ User input
 └─────────────────────────────────────┘
     ▼
 ┌─────────────────────────────────────┐
-│  Memory layer (daozhu-mcp · 23 tools)│
+│  Memory layer (daozhu-mcp · 27 tools)│
 └─────────────────────────────────────┘
 ```
 
@@ -143,7 +143,7 @@ Open `http://127.0.0.1:8765`. Binds to `127.0.0.1` only. Study notes are read-on
 ```bash
 cd mcp
 pip install -r requirements.txt
-python -m pytest tests/          # 31 tests across 4 suites
+python -m pytest tests/          # 42 tests across 4 suites
 python server.py                 # run MCP server over stdio
 ```
 

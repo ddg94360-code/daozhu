@@ -112,6 +112,7 @@ metadata:
 - 「午餐吃了150」→ `daozhu_log_expense`
 - 「今天好煩」→ `daozhu_log_mood`
 - 「記 熱力學第二定律：熵增」→ `daozhu_add_study_note`
+- 「這則筆記複習完了」→ `daozhu_mark_study_note_reviewed`
 - 「明天下午三點要交報告」→ `daozhu_add_reminder`
 - 「這個星期過得如何」→ `daozhu_weekly_report`
 - 「/藏」→ `daozhu_daozang_store`（成功案例入道藏）

@@ -73,14 +73,25 @@ def test_export_empty_month(isolated_memory):
 
 # ---------------------------------------------------------------- 健康連續天數
 def test_health_consecutive_days(isolated_memory, monkeypatch):
+    import memory_store as store
     for d in ["2026-08-10T08:00:00", "2026-08-11T08:00:00"]:
-        monkeypatch.setattr(daily, "now", lambda d=d: d)
+        monkeypatch.setattr(store, "_wall_clock", lambda d=d: datetime.fromisoformat(d))
         r = daily.log_health(sleep_hours=7)
     assert r["consecutive_days"] == 2
     # 未達成的一天打斷連續
-    monkeypatch.setattr(daily, "now", lambda: "2026-08-12T08:00:00")
+    monkeypatch.setattr(store, "_wall_clock", lambda: datetime.fromisoformat("2026-08-12T08:00:00"))
     daily.log_health()  # 無睡眠無運動
     assert daily._consecutive_health_days() == 0
+
+
+def test_health_consecutive_requires_calendar_adjacency(isolated_memory, monkeypatch):
+    """隔一天沒打卡不算連續——必須是日曆相鄰。"""
+    import memory_store as store
+    monkeypatch.setattr(store, "_wall_clock", lambda: datetime.fromisoformat("2026-08-10T08:00:00"))
+    daily.log_health(sleep_hours=7)
+    monkeypatch.setattr(store, "_wall_clock", lambda: datetime.fromisoformat("2026-08-12T08:00:00"))  # 跳過 8/11
+    r = daily.log_health(sleep_hours=7)
+    assert r["consecutive_days"] == 1
 
 
 # ---------------------------------------------------------------- 週報 currency 欄位
@@ -88,6 +99,22 @@ def test_weekly_report_currency(isolated_memory):
     report = weekly.weekly_report()
     assert "currency" in report
     assert report["currency"] == ""  # 預設無貨幣
+
+
+def test_energy_insight_respects_config_threshold(isolated_memory, monkeypatch, tmp_path):
+    """精力分析門檻讀 energy_analysis_days，不是寫死 7。"""
+    yaml_file = tmp_path / "config.yaml"
+    yaml_file.write_text("daozhu:\n  energy_analysis_days: 3\n", encoding="utf-8")
+    monkeypatch.setattr(config, "_config_path", lambda: str(yaml_file))
+    config.load()
+    moods = [
+        {"date": "2026-08-10T09:00:00", "classification": "正向"},
+        {"date": "2026-08-11T10:00:00", "classification": "中性"},
+        {"date": "2026-08-12T11:00:00", "classification": "負向"},
+    ]
+    insight = weekly._energy_insight(moods)
+    assert "數據不足" not in insight
+    assert "活躍時段" in insight
 
 
 # ---------------------------------------------------------------- 節氣多年份
