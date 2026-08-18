@@ -16,9 +16,17 @@ def base_dir() -> str:
     )
 
 
+def _wall_clock() -> datetime:
+    return datetime.now()
+
+
 def now() -> str:
-    """統一 ISO 時間戳（秒精度），全模組共用單一時鐘。"""
-    return datetime.now().isoformat(timespec="seconds")
+    """統一 ISO 時間戳（秒精度），全模組共用單一時鐘。
+
+    測試可 monkeypatch ``memory_store._wall_clock`` 凍住時間；
+    所有呼叫端（含 ``daily.now`` 這個別名）都會跟著走。
+    """
+    return _wall_clock().isoformat(timespec="seconds")
 
 
 def _dir(subdir: str) -> str:
