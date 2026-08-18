@@ -4,7 +4,9 @@ from __future__ import annotations
 import os
 import sys
 
-from fastapi import FastAPI, Query, Request
+from datetime import datetime
+
+from fastapi import Body, FastAPI, Query, Request
 from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
@@ -129,6 +131,93 @@ def api_expenses_csv(month: str = "") -> Response:
         media_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="expenses.csv"'},
     )
+
+
+def _err(code: str, message: str, status: int) -> JSONResponse:
+    return JSONResponse({"error": code, "message": message}, status_code=status)
+
+
+@app.post("/api/expenses")
+def api_post_expense(body: dict = Body(...)):
+    item = str(body.get("item", "")).strip()
+    if not item:
+        return _err("invalid", "項目不能空白", 400)
+    try:
+        amount = float(body.get("amount"))
+    except (TypeError, ValueError):
+        return _err("invalid", "金額必須是大於 0 的數字", 400)
+    if amount <= 0:
+        return _err("invalid", "金額必須是大於 0 的數字", 400)
+    category = str(body.get("category") or "")
+    return daily.log_expense(item, amount, category)
+
+
+@app.post("/api/health")
+def api_post_health(body: dict = Body(...)):
+    sleep = body.get("sleep_hours", 0) or 0
+    try:
+        sleep_f = float(sleep)
+    except (TypeError, ValueError):
+        return _err("invalid", "睡眠時數必須是數字", 400)
+    exercise = str(body.get("exercise") or "").strip()
+    water = str(body.get("water") or "").strip()
+    if sleep_f <= 0 and not exercise and not water:
+        return _err("invalid", "至少填一項健康紀錄", 400)
+    return daily.log_health(sleep_f, exercise, water)
+
+
+@app.post("/api/reminders")
+def api_post_reminder(body: dict = Body(...)):
+    content = str(body.get("content", "")).strip()
+    if not content:
+        return _err("invalid", "提醒內容不能空白", 400)
+    dt = str(body.get("datetime", "")).strip()
+    try:
+        datetime.fromisoformat(dt)
+    except ValueError:
+        return _err("invalid", "時間須為 ISO 格式", 400)
+    recurring = bool(body.get("recurring", False))
+    return daily.add_reminder(content, dt, recurring)
+
+
+@app.post("/api/reminders/{reminder_id}/done")
+def api_reminder_done(reminder_id: str):
+    res = daily.mark_reminder_done(reminder_id)
+    if not res.get("matched"):
+        return _err("not_found", "找不到這則提醒", 404)
+    return res
+
+
+@app.post("/api/shopping")
+def api_post_shopping(body: dict = Body(...)):
+    item = str(body.get("item", "")).strip()
+    if not item:
+        return _err("invalid", "項目不能空白", 400)
+    return daily.add_shopping(item)
+
+
+@app.post("/api/shopping/{item_id}/check")
+def api_shopping_check(item_id: str):
+    res = daily.check_shopping_by_id(item_id)
+    if not res.get("matched"):
+        return _err("not_found", "找不到這筆採買", 404)
+    return res
+
+
+@app.delete("/api/shopping/{item_id}")
+def api_shopping_delete(item_id: str):
+    res = daily.remove_shopping_by_id(item_id)
+    if not res.get("removed"):
+        return _err("not_found", "找不到這筆採買", 404)
+    return res
+
+
+@app.post("/api/moods")
+def api_post_mood(body: dict = Body(...)):
+    mood = str(body.get("mood", "")).strip()
+    if not mood:
+        return _err("invalid", "情緒不能空白", 400)
+    return daily.log_mood(mood)
 
 
 # 靜態目錄在 Task 5 才放 index.html；此處若目錄尚無檔案，先不要 mount 以免測試炸。

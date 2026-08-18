@@ -100,3 +100,53 @@ def test_expenses_csv(client, isolated_memory):
     assert r.status_code == 200
     assert "text/csv" in r.headers["content-type"]
     assert "午餐" in r.text
+
+
+def test_post_expense_then_get(client, isolated_memory):
+    r = client.post("/api/expenses", json={"item": "午餐", "amount": 80})
+    assert r.status_code == 200
+    assert r.json()["record"]["amount"] == 80
+    listed = client.get("/api/expenses").json()
+    assert listed["summary"]["total"] == 80
+
+
+def test_post_expense_bad_amount(client):
+    r = client.post("/api/expenses", json={"item": "午餐", "amount": 0})
+    assert r.status_code == 400
+    assert r.json()["error"] == "invalid"
+    assert "金額" in r.json()["message"]
+
+
+def test_mark_missing_reminder_404(client):
+    r = client.post("/api/reminders/deadbeef/done")
+    assert r.status_code == 404
+    assert r.json()["error"] == "not_found"
+
+
+def test_shopping_check_by_id_not_fuzzy(client, isolated_memory):
+    a = client.post("/api/shopping", json={"item": "咖啡"}).json()["record"]
+    b = client.post("/api/shopping", json={"item": "咖啡"}).json()["record"]
+    r = client.post(f"/api/shopping/{a['id']}/check")
+    assert r.status_code == 200
+    recs = {x["id"]: x for x in client.get("/api/shopping").json()["records"]}
+    assert recs[a["id"]]["checked"] is True
+    assert recs[b["id"]]["checked"] is False
+
+
+def test_delete_shopping_404(client):
+    r = client.delete("/api/shopping/nope")
+    assert r.status_code == 404
+
+
+def test_health_requires_one_field(client):
+    r = client.post("/api/health", json={})
+    assert r.status_code == 400
+    assert r.json()["error"] == "invalid"
+
+
+def test_mood_roundtrip(client, isolated_memory):
+    r = client.post("/api/moods", json={"mood": "今天好煩"})
+    assert r.status_code == 200
+    assert r.json()["record"]["classification"] == "負向"
+    listed = client.get("/api/moods").json()["records"]
+    assert listed[0]["mood"] == "今天好煩"
