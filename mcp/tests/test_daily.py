@@ -103,3 +103,30 @@ def test_status_counts(isolated_memory):
     status = weekly.status()
     assert status["status"] == "ok"
     assert status["counts"]["mood_log"] == 1
+
+
+def test_check_shopping_by_id_only_touches_that_row(isolated_memory):
+    a = daily.add_shopping("咖啡")["record"]
+    b = daily.add_shopping("咖啡")["record"]
+    assert daily.check_shopping_by_id(a["id"])["matched"] is True
+    items = {r["id"]: r for r in daily.list_shopping()}
+    assert items[a["id"]]["checked"] is True
+    assert items[b["id"]]["checked"] is False
+
+
+def test_check_shopping_by_id_missing_or_already_checked(isolated_memory):
+    rec = daily.add_shopping("牛奶")["record"]
+    assert daily.check_shopping_by_id("no-such")["matched"] is False
+    assert daily.check_shopping_by_id(rec["id"])["matched"] is True
+    assert daily.check_shopping_by_id(rec["id"])["matched"] is False
+    assert len(daily.list_shopping()) == 1
+
+
+def test_remove_shopping_by_id_only_deletes_that_row(isolated_memory):
+    a = daily.add_shopping("雞蛋")["record"]
+    b = daily.add_shopping("雞蛋")["record"]
+    assert daily.remove_shopping_by_id(a["id"])["removed"] == 1
+    left = daily.list_shopping()
+    assert len(left) == 1
+    assert left[0]["id"] == b["id"]
+    assert daily.remove_shopping_by_id("no-such")["removed"] == 0

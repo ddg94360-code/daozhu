@@ -33,6 +33,8 @@ _TOOLS = {
     "daozhu_list_shopping": daily.list_shopping,
     "daozhu_check_shopping": daily.check_shopping,
     "daozhu_remove_shopping": daily.remove_shopping,
+    "daozhu_check_shopping_by_id": daily.check_shopping_by_id,
+    "daozhu_remove_shopping_by_id": daily.remove_shopping_by_id,
     # ---- 情緒日記
     "daozhu_log_mood": daily.log_mood,
     # ---- 學習筆記

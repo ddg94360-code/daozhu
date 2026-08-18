@@ -134,6 +134,22 @@ def remove_shopping(item: str) -> dict:
     return {"removed": removed}
 
 
+def check_shopping_by_id(item_id: str) -> dict:
+    """按 id 標記已購，就地改 checked，不刪除。"""
+    n = store.map_update(
+        "shopping",
+        lambda r: r.get("id") == item_id and not r.get("checked", False),
+        lambda r: {**r, "checked": True},
+    )
+    return {"matched": n > 0}
+
+
+def remove_shopping_by_id(item_id: str) -> dict:
+    """按 id 刪除一筆採買。"""
+    removed = store.filter_replace("shopping", lambda r: r.get("id") != item_id)
+    return {"removed": removed}
+
+
 # ---------------------------------------------------------------- 情緒日記
 POSITIVE = ["開心", "滿足", "平靜", "快樂", "興奮", "爽", "好", "喜歡", "期待", "放鬆"]
 NEGATIVE = ["煩", "焦慮", "沮喪", "累", "難過", "生氣", "壓力", "崩潰", "撐不下去", "低落", "怕", "後悔", "自卑"]

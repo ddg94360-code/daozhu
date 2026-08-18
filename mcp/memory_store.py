@@ -97,6 +97,22 @@ def filter_replace(name: str, keep_predicate, subdir: str = "daily") -> int:
     return len(records) - len(kept)
 
 
+def map_update(name: str, predicate, transform, subdir: str = "daily") -> int:
+    """讀取→對符合條件的紀錄套用 transform→原子寫回。回傳改動筆數。"""
+    records = _read_all(name, subdir)
+    changed = 0
+    updated = []
+    for r in records:
+        if predicate(r):
+            updated.append(transform(r))
+            changed += 1
+        else:
+            updated.append(r)
+    if changed:
+        _write_all(name, updated, subdir)
+    return changed
+
+
 # ---------------------------------------------------------------- 整庫備份 / 還原
 
 _COLLECTIONS = ["expenses", "health", "reminders", "shopping", "mood_log", "study_notes", "decisions"]
