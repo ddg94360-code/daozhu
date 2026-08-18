@@ -109,6 +109,22 @@ local_memory/
 └── daozang/        # 各人格成功策略案例庫（道藏）
 ```
 
+## 本機儀表板（選用）
+
+與 MCP 共用同一份 `local_memory/` 的 loopback 網頁介面。不是聊天視窗。
+
+```bash
+pip install -r mcp/requirements-web.txt
+# 可選：指向既有記憶庫（例如 Claude Code 專案裡的複本）
+# Windows:
+set DAOZHU_MEMORY_DIR=C:\path\to\local_memory
+# POSIX:
+export DAOZHU_MEMORY_DIR=/path/to/local_memory
+python -m web
+```
+
+開啟 `http://127.0.0.1:8765`。只綁定 `127.0.0.1`。學習筆記為唯讀；請在對話中複習。
+
 ## 開發
 
 ```bash

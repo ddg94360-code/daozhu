@@ -5,6 +5,8 @@ All notable changes to 道樞 Dàoshū are documented here. Format follows [Keep
 ## [Unreleased]
 
 ### Added
+- 本機記憶儀表板（`python -m web`，`127.0.0.1:8765`）：週報／支出／健康／提醒／採買／情緒可寫入，筆記只讀
+- `daily.check_shopping_by_id` / `daily.remove_shopping_by_id`（MCP：`daozhu_check_shopping_by_id` / `daozhu_remove_shopping_by_id`）
 - `config.py` — optional `config.yaml` support (`timezone`, `currency`, `review_weekday`, `review_time`, `energy_analysis_days`, `high_speed_threshold`), with `config.yaml.example`
 - `daozhu_export_expenses_csv` — export monthly expenses as CSV (auto-escapes commas)
 - `daozhu_config_show` — inspect the active configuration

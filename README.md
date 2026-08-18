@@ -122,6 +122,22 @@ Copy `mcp/config.yaml.example` to `mcp/config.yaml` to override:
 
 `yaml` is an optional dependency — without it, defaults are used silently.
 
+## Local dashboard (optional)
+
+A loopback-only web UI for the same `local_memory/` the MCP uses. Not a chat window.
+
+```bash
+pip install -r mcp/requirements-web.txt
+# optional: point at an existing store (e.g. a Claude Code project copy)
+# Windows:
+set DAOZHU_MEMORY_DIR=C:\path\to\local_memory
+# POSIX:
+export DAOZHU_MEMORY_DIR=/path/to/local_memory
+python -m web
+```
+
+Open `http://127.0.0.1:8765`. Binds to `127.0.0.1` only. Study notes are read-only; review them in chat.
+
 ## Development
 
 ```bash

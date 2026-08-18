@@ -21,6 +21,15 @@ python -m pytest tests/    # all tests must pass
 
 The MCP server runs over stdio — `python server.py` and test with any MCP client, or call the underlying functions directly.
 
+Optional dashboard:
+
+```bash
+pip install -r mcp/requirements-web.txt
+python -m pytest web/tests/
+```
+
+New HTTP routes must call `daily` / `weekly` / `solarterm` — never write `local_memory` JSON from `web/`.
+
 ## Code style
 
 - **Python** (`mcp/`): type hints on every public function, a one-line docstring in Traditional Chinese, no dead code. Follow the existing module patterns (`memory_store` as the shared bottom layer; `daily`/`weekly`/`daozang`/`solarterm` as feature modules; `server` as a thin `_TOOLS` registry).
