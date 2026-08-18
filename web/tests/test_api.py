@@ -44,3 +44,59 @@ def test_rejects_non_loopback(isolated_memory):
         assert "本機" in body["message"]
 
     asyncio.run(_call())
+
+
+from datetime import datetime
+
+import daily
+import memory_store as store
+
+
+def test_overview_empty_ok(client, isolated_memory):
+    r = client.get("/api/overview")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["status"]["status"] == "ok"
+    assert body["report"]["expense_total"] == 0
+    assert "current" in body["solar_term"]
+    assert body["memory_dir"] == str(isolated_memory)
+
+
+def test_expenses_lists_recent_after_log(client, isolated_memory):
+    daily.log_expense("午餐", 150, "飲食")
+    r = client.get("/api/expenses")
+    assert r.status_code == 200
+    body = r.json()
+    assert body["summary"]["total"] == 150
+    assert body["summary"]["by_category"]["飲食"] == 150
+    assert len(body["recent"]) == 1
+    assert body["recent"][0]["item"] == "午餐"
+
+
+def test_reminders_mark_due(client, isolated_memory, monkeypatch):
+    monkeypatch.setattr(store, "_wall_clock", lambda: datetime.fromisoformat("2026-08-18T12:00:00"))
+    daily.add_reminder("過期", "2026-08-18T10:00:00")
+    daily.add_reminder("未來", "2026-08-19T10:00:00")
+    r = client.get("/api/reminders")
+    assert r.status_code == 200
+    recs = {x["content"]: x for x in r.json()["records"]}
+    assert recs["過期"]["due"] is True
+    assert recs["未來"]["due"] is False
+
+
+def test_notes_are_read_only_shape(client, isolated_memory, monkeypatch):
+    monkeypatch.setattr(store, "_wall_clock", lambda: datetime.fromisoformat("2026-08-18T12:00:00"))
+    daily.add_study_note("物理", "熵增", review_days=0)
+    r = client.get("/api/notes")
+    assert r.status_code == 200
+    assert len(r.json()["due"]) == 1
+    post = client.post("/api/notes", json={"subject": "x", "content": "y"})
+    assert post.status_code in (404, 405)
+
+
+def test_expenses_csv(client, isolated_memory):
+    daily.log_expense("午餐", 150)
+    r = client.get("/api/expenses.csv")
+    assert r.status_code == 200
+    assert "text/csv" in r.headers["content-type"]
+    assert "午餐" in r.text
