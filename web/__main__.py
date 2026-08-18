@@ -1,7 +1,7 @@
 """python -m web → http://127.0.0.1:8765"""
 import uvicorn
 
-from app import app
+from web.app import app
 
 
 def main() -> None:
