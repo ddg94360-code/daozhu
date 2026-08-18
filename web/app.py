@@ -7,7 +7,7 @@ import sys
 from datetime import datetime
 
 from fastapi import Body, FastAPI, Query, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 _REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -220,5 +220,9 @@ def api_post_mood(body: dict = Body(...)):
     return daily.log_mood(mood)
 
 
-# 靜態目錄在 Task 5 才放 index.html；此處若目錄尚無檔案，先不要 mount 以免測試炸。
-# Task 5 再加：if os.path.isdir(_STATIC): app.mount("/", StaticFiles(directory=_STATIC, html=True), name="static")
+@app.get("/")
+def index():
+    return FileResponse(os.path.join(_STATIC, "index.html"))
+
+
+app.mount("/static", StaticFiles(directory=_STATIC), name="static")

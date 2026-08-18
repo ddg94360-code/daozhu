@@ -150,3 +150,10 @@ def test_mood_roundtrip(client, isolated_memory):
     assert r.json()["record"]["classification"] == "負向"
     listed = client.get("/api/moods").json()["records"]
     assert listed[0]["mood"] == "今天好煩"
+
+
+def test_index_html(client):
+    r = client.get("/")
+    assert r.status_code == 200
+    assert "text/html" in r.headers["content-type"]
+    assert "道樞" in r.text
