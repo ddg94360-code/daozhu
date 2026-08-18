@@ -232,6 +232,23 @@ def test_cabinet_and_xinjing_pages(client):
     assert "text/html" in cab.headers["content-type"]
 
 
+def test_theme_shell_on_three_pages(client):
+    keys = ("daoist", "confucian", "legalist", "strategist", "taiji")
+    for path in ("/", "/cabinet", "/xinjing"):
+        html = client.get(path).text
+        assert 'id="theme-select"' in html
+        assert "/static/theme.js" in html
+        assert 'class="taiji-fish"' in html
+        for key in keys:
+            assert f'value="{key}"' in html
+    css = client.get("/static/app.css").text
+    for key in keys:
+        assert f'data-theme="{key}"' in css
+    js = client.get("/static/theme.js").text
+    assert "daozhu.theme" in js
+    assert "daoist" in js
+
+
 def test_expenses_csv(client, isolated_memory):
     daily.log_expense("午餐", 150)
     r = client.get("/api/expenses.csv")

@@ -11,6 +11,7 @@ All notable changes to 道樞 Dàoshū are documented here. Format follows [Keep
 - Energy insight threshold reads `energy_analysis_days` from config instead of a hardcoded 7.
 
 ### Added
+- 本機儀表板 2.5 期：五套可切主題（道家預設／儒家／法家／縱橫／太極），`localStorage` 記住；太極附慢轉陰陽魚。紫夜只留在心鏡 iframe。
 - 本機儀表板第二期：筆記 CRUD、決策寫入、道藏只讀、感知條（記憶推斷）、內閣組閣預覽、心鏡 JSON 播放、統一 500 handler
 - `daily.mark_study_note_reviewed_by_id` / `daily.delete_study_note_by_id`（MCP 同名）；新筆記帶 `id`
 - `memory_store.map_update` — in-place record transform (the missing primitive behind mark-done / check / reviewed).

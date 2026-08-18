@@ -5,10 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>道樞</title>
   <link rel="stylesheet" href="/static/app.css">
+  <script src="/static/theme.js"></script>
 </head>
 <body>
   <div class="stars"></div>
   <div class="vignette"></div>
+  <svg class="taiji-fish" viewBox="0 0 100 100" aria-hidden="true">
+    <circle cx="50" cy="50" r="48" fill="#111"/>
+    <path d="M50 2a48 48 0 0 1 0 96 24 24 0 0 1 0-48 24 24 0 0 0 0-48Z" fill="#f2f2f2"/>
+    <circle cx="50" cy="26" r="6" fill="#111"/>
+    <circle cx="50" cy="74" r="6" fill="#f2f2f2"/>
+  </svg>
   <header>
     <div class="title">道樞</div>
     <div id="solar" class="sub"></div>
@@ -17,6 +24,13 @@
       <a href="/" aria-current="page">看板</a>
       <a href="/cabinet">內閣</a>
       <a href="/xinjing">心鏡</a>
+      <select id="theme-select" aria-label="主題">
+        <option value="daoist">道家</option>
+        <option value="confucian">儒家</option>
+        <option value="legalist">法家</option>
+        <option value="strategist">縱橫</option>
+        <option value="taiji">太極</option>
+      </select>
     </nav>
     <div id="perception" class="perception"></div>
   </header>

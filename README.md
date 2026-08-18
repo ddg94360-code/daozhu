@@ -136,7 +136,7 @@ export DAOZHU_MEMORY_DIR=/path/to/local_memory
 python -m web
 ```
 
-Open `http://127.0.0.1:8765`. Three pages: board `/`, cabinet `/cabinet`, mirror `/xinjing`. Binds to `127.0.0.1` only. Study notes can be added, marked reviewed, and deleted by id. Cabinet preview seats ministers and does not generate speeches. The mirror plays example or pasted JSON and does not cast real hexagrams.
+Open `http://127.0.0.1:8765`. Three pages: board `/`, cabinet `/cabinet`, mirror `/xinjing`. Binds to `127.0.0.1` only. A header control switches themes (Daoist default / Confucian / Legalist / Strategist / Taiji) and remembers the choice in `localStorage`. Study notes can be added, marked reviewed, and deleted by id. Cabinet preview seats ministers and does not generate speeches. The mirror plays example or pasted JSON and does not cast real hexagrams.
 
 ## Development
 
