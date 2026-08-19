@@ -478,9 +478,14 @@ def _dispatch_chat(intent: str, slots: dict, source: str) -> dict:
             summary = daily.month_expense_summary()
             return _chat_ok(intent, source, f"本月合計 {summary.get('currency') or ''}{summary['total']}", summary)
         if intent == "query_reminders":
-            recs = daily.due_reminders()
-            reply = "沒有到期提醒" if not recs else "到期：" + "、".join(r.get("content") or "" for r in recs[:8])
-            return _chat_ok(intent, source, reply, {"records": recs})
+            scope = str(slots.get("scope") or "due")
+            recs = daily.pending_reminders() if scope == "pending" else daily.due_reminders()
+            if not recs:
+                reply = "沒有待辦提醒" if scope == "pending" else "沒有到期提醒"
+            else:
+                prefix = "待辦：" if scope == "pending" else "到期："
+                reply = prefix + "、".join(r.get("content") or "" for r in recs[:8])
+            return _chat_ok(intent, source, reply, {"records": recs, "scope": scope})
         if intent == "query_notes":
             recs = daily.due_study_notes()
             reply = "沒有到期筆記" if not recs else "待複習：" + "、".join(r.get("subject") or "" for r in recs[:8])

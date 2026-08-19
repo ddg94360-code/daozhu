@@ -23,6 +23,27 @@ def test_router_unknown():
     assert router.parse("")["intent"] == "unknown"
 
 
+def test_router_reminder_query_scope():
+    due = router.parse("到期提醒")
+    assert due["intent"] == "query_reminders"
+    assert due["slots"].get("scope") == "due"
+    pending = router.parse("待辦提醒")
+    assert pending["intent"] == "query_reminders"
+    assert pending["slots"].get("scope") == "pending"
+    what = router.parse("有什麼待辦")
+    assert what["intent"] == "query_reminders"
+    assert what["slots"].get("scope") == "pending"
+
+
+def test_router_generic_hao_is_not_mood():
+    """「好」在 daily.POSITIVE 裡，但不能讓聊天把寒暄當情緒。"""
+    assert router.parse("好")["intent"] == "unknown"
+    assert router.parse("好的")["intent"] == "unknown"
+    assert router.parse("我很好")["intent"] == "unknown"
+    assert router.parse("今天好煩")["intent"] == "mood"
+    assert router.parse("今天好開心")["intent"] == "mood"
+
+
 def test_chat_expense_writes(client, isolated_memory):
     r = client.post("/api/chat", json={"text": "午餐吃了 150"})
     assert r.status_code == 200
@@ -72,6 +93,20 @@ def test_chat_note_and_query(client, isolated_memory, monkeypatch):
     q = client.post("/api/chat", json={"text": "待複習"})
     assert q.json()["ok"] is True
     assert "物理" in q.json()["reply"]
+
+
+def test_chat_query_pending_vs_due_reminders(client, isolated_memory, monkeypatch):
+    monkeypatch.setattr(store, "_wall_clock", lambda: datetime.fromisoformat("2026-08-18T12:00:00"))
+    daily.add_reminder("過期", "2026-08-18T10:00:00")
+    daily.add_reminder("未來", "2026-08-19T10:00:00")
+    due = client.post("/api/chat", json={"text": "到期提醒"}).json()
+    assert due["ok"] is True
+    assert "過期" in due["reply"]
+    assert "未來" not in due["reply"]
+    pending = client.post("/api/chat", json={"text": "待辦提醒"}).json()
+    assert pending["ok"] is True
+    assert "過期" in pending["reply"]
+    assert "未來" in pending["reply"]
 
 
 def test_convene_fills_bodies(client):

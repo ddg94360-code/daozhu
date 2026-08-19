@@ -12,3 +12,6 @@ mcp/config.yaml
 
 # git worktrees (local isolation)
 .worktrees/
+
+# skyfield 若從錯誤 CWD 下載星曆，不要弄髒開源套件
+/data/ephemeris/

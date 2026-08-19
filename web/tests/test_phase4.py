@@ -185,3 +185,8 @@ def test_cabinet_page_has_depth_and_followup(client):
     js = client.get("/static/cabinet.js").text
     assert "/api/cabinet/followup" in js
     assert "cabinet-depth" in js
+
+
+def test_xinjing_js_reads_dt_local_from_json(client):
+    js = client.get("/static/xinjing.js").text
+    assert "parsed.dt_local" in js

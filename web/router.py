@@ -24,6 +24,9 @@ _AMOUNT = re.compile(r"(-?\d+(?:\.\d+)?)")
 _ISOISH = re.compile(r"(\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?)")
 _FOOD = ("餐", "飯", "麵", "吃", "咖啡", "飲料", "奶茶", "便當", "小吃")
 _PAY = ("吃了", "花了", "付了", "買了")
+# daily.POSITIVE 含單字「好」，聊天窗不能把寒暄當情緒。
+_MOOD_SKIP = {"好"}
+_GENERIC_OK = {"好", "好的", "很好", "我很好", "好啊", "好吧", "好喔", "好哦"}
 
 
 def parse(text: str) -> dict[str, Any]:
@@ -37,8 +40,9 @@ def parse(text: str) -> dict[str, Any]:
         return expense
     if _is_query_expense(raw):
         return {"intent": "query_expense", "slots": {}}
-    if _is_query_reminders(raw):
-        return {"intent": "query_reminders", "slots": {}}
+    reminders_q = _query_reminders(raw)
+    if reminders_q:
+        return reminders_q
     if _is_query_notes(raw):
         return {"intent": "query_notes", "slots": {}}
     shop = _shopping(raw)
@@ -83,7 +87,9 @@ def _expense(text: str) -> dict[str, Any] | None:
 def _mood(text: str) -> dict[str, Any] | None:
     if _AMOUNT.search(text):
         return None
-    hits = list(daily.POSITIVE) + list(daily.NEGATIVE)
+    if text in _GENERIC_OK:
+        return None
+    hits = [w for w in list(daily.POSITIVE) + list(daily.NEGATIVE) if w not in _MOOD_SKIP]
     if any(w in text for w in hits):
         return {"intent": "mood", "slots": {"mood": text}}
     return None
@@ -176,8 +182,12 @@ def _is_query_expense(text: str) -> bool:
     return any(k in text for k in ("這個月花多少", "本月支出", "花了多少"))
 
 
-def _is_query_reminders(text: str) -> bool:
-    return any(k in text for k in ("有什麼待辦", "到期提醒", "待辦提醒"))
+def _query_reminders(text: str) -> dict[str, Any] | None:
+    if "到期提醒" in text:
+        return {"intent": "query_reminders", "slots": {"scope": "due"}}
+    if any(k in text for k in ("有什麼待辦", "待辦提醒")):
+        return {"intent": "query_reminders", "slots": {"scope": "pending"}}
+    return None
 
 
 def _is_query_notes(text: str) -> bool:

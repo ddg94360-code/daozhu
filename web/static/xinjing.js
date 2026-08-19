@@ -10,6 +10,19 @@ function twoInts(text) {
   return [3, 8];
 }
 
+function dtLocalFrom(raw) {
+  if (looksIso(raw)) return raw;
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.dt_local === "string") return parsed.dt_local;
+    const nested = parsed && parsed.input && parsed.input.dt_local;
+    if (typeof nested === "string") return String(nested).replace(" ", "T");
+  } catch {
+    /* textarea 不是 JSON，就當沒有時刻 */
+  }
+  return "";
+}
+
 async function get(path) {
   const r = await fetch(path);
   const data = await r.json().catch(() => ({}));
@@ -32,7 +45,7 @@ $("xinjing-cast").addEventListener("click", async () => {
     if (mode === "gua") extra.question = raw.slice(0, 80);
     if (mode === "fengshui") extra.year = new Date().getFullYear();
     if (mode === "chart" || mode === "bazi" || mode === "ziwei") {
-      extra.dt_local = looksIso(raw) ? raw : "";
+      extra.dt_local = dtLocalFrom(raw);
     }
     if (mode === "meihua") extra.numbers = twoInts(raw);
     extra.question = extra.question || raw.slice(0, 80);
