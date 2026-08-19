@@ -43,6 +43,7 @@ import cabinet
 import llm
 import perception
 import router
+import cabinet_session
 import speech
 import tianji_bridge
 
@@ -323,6 +324,7 @@ def api_cabinet_convene(body: dict = Body(...)) -> Any:
         preview["persisted"] = True
     else:
         preview["persisted"] = False
+    preview["session"] = cabinet_session.save(topic, stages, depth)
     return preview
 
 
@@ -333,8 +335,12 @@ def api_cabinet_followup(body: dict = Body(...)) -> Any:
     question = str(body.get("question", "")).strip()
     if not topic or not name or not question:
         return _err("invalid", "議題、內閣與追問不能空白", 400)
-    stages = body.get("stages") if isinstance(body.get("stages"), list) else None
     try:
+        if name not in speech.CABINET_NAMES:
+            raise ValueError("查無此內閣")
+        stages = cabinet_session.stages_for_followup(
+            body.get("stages") if isinstance(body.get("stages"), list) else None
+        )
         template = speech.followup(name, topic, question, stages)
     except ValueError as e:
         return _err("invalid", str(e), 400)

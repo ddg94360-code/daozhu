@@ -26,3 +26,12 @@ def client(isolated_memory):
 
     with TestClient(app) as c:
         yield c
+
+
+@pytest.fixture(autouse=True)
+def _clear_cabinet_session():
+    import cabinet_session
+
+    cabinet_session.clear()
+    yield
+    cabinet_session.clear()

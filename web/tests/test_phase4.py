@@ -4,6 +4,9 @@ import json
 import os
 import sys
 
+import pytest
+
+import cabinet_session
 import speech
 import tianji_bridge
 
@@ -49,17 +52,14 @@ def test_preview_still_empty_bodies(client):
     assert "depth" not in r.json()
 
 
-def test_followup_template(client):
+def test_followup_without_stages_and_no_session_400(client):
     r = client.post(
         "/api/cabinet/followup",
         json={"topic": "組員不做事該怎麼講", "name": "儒家", "question": "先說哪一句"},
     )
-    assert r.status_code == 200
-    body = r.json()
-    assert body["name"] == "儒家"
-    assert body["source"] == "template"
-    assert body["body"]
-    assert "非正式" in body["disclaimer"]
+    assert r.status_code == 400
+    assert r.json()["error"] == "invalid"
+    assert "尚無本場會議" in r.json()["message"]
 
 
 def test_followup_unknown_name_400(client):
@@ -106,14 +106,64 @@ def test_followup_uses_stage_context(client):
     assert body["source"] == "template"
 
 
-def test_followup_without_stages_still_works(client):
+def test_convene_returns_session_hex(client):
+    r = client.post("/api/cabinet/convene", json={"topic": "該不該接這個專案"})
+    assert r.status_code == 200
+    sid = r.json()["session"]
+    assert len(sid) == 8 and all(c in "0123456789abcdef" for c in sid)
+
+
+def test_followup_uses_server_session_without_stages(client):
+    client.post("/api/cabinet/convene", json={"topic": "組員不做事該怎麼講"})
     r = client.post(
         "/api/cabinet/followup",
         json={"topic": "組員不做事該怎麼講", "name": "儒家", "question": "先說哪一句"},
     )
     assert r.status_code == 200
-    assert r.json()["body"]
+    body = r.json()["body"]
+    assert body
     assert "非正式" in r.json()["disclaimer"]
+    assert "先前" in body or "正名" in body or "名分" in body or "組員" in body
+
+
+def test_second_convene_replaces_session(client):
+    client.post("/api/cabinet/convene", json={"topic": "第一場議題甲"})
+    client.post("/api/cabinet/convene", json={"topic": "第二場議題乙"})
+    r = client.post(
+        "/api/cabinet/followup",
+        json={"topic": "第二場議題乙", "name": "法家", "question": "成本"},
+    )
+    assert r.status_code == 200
+    assert "乙" in r.json()["body"] or "第二場" in r.json()["body"]
+    assert "議題甲" not in r.json()["body"]
+
+
+def test_session_save_get_clear():
+    cabinet_session.clear()
+    assert cabinet_session.get() is None
+    sid = cabinet_session.save("題甲", [{"name": "開題", "body": "甲"}], "brief")
+    assert len(sid) == 8 and all(c in "0123456789abcdef" for c in sid)
+    got = cabinet_session.get()
+    assert got["id"] == sid
+    assert got["topic"] == "題甲"
+    assert got["stages"][0]["body"] == "甲"
+    assert got["depth"] == "brief"
+    cabinet_session.save("題乙", [{"name": "開題", "body": "乙"}], "deep")
+    assert cabinet_session.get()["topic"] == "題乙"
+    cabinet_session.clear()
+    assert cabinet_session.get() is None
+
+
+def test_stages_for_followup_prefers_client_list():
+    cabinet_session.clear()
+    cabinet_session.save("題", [{"name": "開題", "body": "存檔"}], "brief")
+    client = [{"name": "開題", "body": "客戶"}]
+    assert cabinet_session.stages_for_followup(client) == client
+    assert cabinet_session.stages_for_followup([]) == []
+    assert cabinet_session.stages_for_followup(None)[0]["body"] == "存檔"
+    cabinet_session.clear()
+    with pytest.raises(ValueError, match="尚無本場會議"):
+        cabinet_session.stages_for_followup(None)
 
 
 def test_xinjing_status_lists_calc_and_narrative(client, monkeypatch):
@@ -294,5 +344,6 @@ def test_xinjing_cast_fake_qimen(client, tmp_path, monkeypatch):
 
 def test_cabinet_js_sends_followup_stages(client):
     js = client.get("/static/cabinet.js").text
-    assert "stages:" in js or "stages :" in js
     assert "lastStages" in js
+    assert "if (lastStages.length)" in js
+    assert "payload.stages" in js

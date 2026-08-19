@@ -80,12 +80,13 @@ $("cabinet-followup-form").addEventListener("submit", async (ev) => {
   $("cabinet-followup-err").textContent = "";
   try {
     const topic = new FormData($("cabinet-form")).get("topic");
-    const data = await send("POST", "/api/cabinet/followup", {
+    const payload = {
       topic,
       name: $("cabinet-followup-name").value,
       question: $("cabinet-followup-q").value,
-      stages: lastStages,
-    });
+    };
+    if (lastStages.length) payload.stages = lastStages;
+    const data = await send("POST", "/api/cabinet/followup", payload);
     const box = $("cabinet-followup");
     box.hidden = false;
     box.replaceChildren();
