@@ -84,7 +84,121 @@ body {
   font-family: "Microsoft JhengHei", "PingFang TC", serif;
   color: var(--text);
   background: radial-gradient(circle at 50% 25%, var(--bg1) 0%, var(--bg0) 70%);
+  display: flex;
+}
+.rail {
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: .15rem;
+  padding: 1.2rem .85rem 1rem;
+  border-right: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 2;
+}
+.rail-brand {
+  letter-spacing: .35em;
+  color: var(--title);
+  text-shadow: 0 0 12px var(--title-glow);
+  font-size: .85rem;
+  margin-bottom: .8rem;
+}
+.rail a {
+  letter-spacing: .2em;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: .78rem;
+  padding: .35rem .45rem;
+  border-radius: 6px;
+}
+.rail a[aria-current="page"] {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.rail #theme-select {
+  margin: .8rem 0 0;
+  width: 100%;
+  font-size: .72rem;
+  letter-spacing: .08em;
+}
+.rail-status {
+  margin-top: auto;
+  font-size: .65rem;
+  color: var(--dim);
+  line-height: 1.6;
+  word-break: break-all;
+}
+.shell {
+  flex: 1;
+  min-width: 0;
   padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.workspace {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(240px, 0.9fr) minmax(0, 1.6fr);
+  gap: 1rem;
+  align-items: stretch;
+  min-height: 0;
+  margin-top: 1rem;
+}
+.compose {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+.stage-pane {
+  min-height: 0;
+  overflow: auto;
+}
+#cabinet-stage-pane {
+  min-height: calc(100vh - 8rem);
+}
+#xinjing-stage {
+  width: 100%;
+  min-height: calc(100vh - 8rem);
+  height: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg0);
+}
+@media (max-width: 900px) {
+  .workspace { grid-template-columns: 1fr; }
+  #cabinet-stage-pane,
+  #xinjing-stage { min-height: 60vh; }
+}
+@media (max-width: 720px) {
+  .rail {
+    width: 48px;
+    padding: .8rem .25rem;
+    align-items: center;
+  }
+  .rail-brand,
+  .rail-status,
+  .rail #theme-select { display: none; }
+  .rail a {
+    letter-spacing: 0;
+    font-size: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .rail a::after {
+    content: attr(data-short);
+    font-size: .78rem;
+    letter-spacing: 0;
+  }
 }
 .stars { position: fixed; inset: 0; pointer-events: none; z-index: 0;
   background-image:
@@ -107,7 +221,7 @@ body {
 }
 html[data-theme="taiji"] .taiji-fish { display: block; }
 @keyframes taiji-spin { to { transform: rotate(360deg); } }
-header, main { position: relative; z-index: 1; }
+header, main, .shell { position: relative; z-index: 1; }
 .title { letter-spacing: .35em; color: var(--title); text-shadow: 0 0 12px var(--title-glow); }
 .sub { margin-top: .4rem; font-size: .75rem; color: var(--muted); }
 .path { font-size: .65rem; color: var(--dim); word-break: break-all; }
@@ -127,17 +241,13 @@ button { cursor: pointer; color: var(--accent); }
 .due { color: var(--err); }
 .hint { font-size: .7rem; color: var(--muted); margin-top: .4rem; }
 a { color: var(--accent); font-size: .75rem; }
-.nav { display: flex; gap: 1rem; margin-top: .7rem; align-items: center; flex-wrap: wrap; }
-.nav a { letter-spacing: .2em; text-decoration: none; }
-.nav a[aria-current="page"] { border-bottom: 1px solid var(--accent); }
-#theme-select { margin-left: auto; font-size: .72rem; letter-spacing: .08em; }
+#theme-select { font-size: .72rem; letter-spacing: .08em; }
 .perception { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .7rem; align-items: center; }
 .layer { font-size: .68rem; letter-spacing: .12em; color: var(--dim); border: 1px solid var(--border); border-radius: 999px; padding: .15rem .5rem; }
 .layer.on { color: var(--accent); border-color: var(--accent); }
 .disclaimer { font-size: .65rem; color: var(--dim); flex-basis: 100%; }
 .stage-card { min-height: 4.2rem; margin-top: .5rem; }
 .stage-card .who { font-size: .68rem; color: var(--muted); }
-#xinjing-stage { width: 100%; min-height: 70vh; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg0); }
 textarea { width: 100%; min-height: 8rem; background: var(--bg0); color: var(--text); border: 1px solid var(--border); border-radius: 6px; padding: .5rem; font: inherit; }
 .persona { margin-top: .5rem; }
 .persona h3 { font-size: .75rem; color: var(--muted); letter-spacing: .15em; }

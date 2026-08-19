@@ -15,3 +15,9 @@ mcp/config.yaml
 
 # skyfield 若從錯誤 CWD 下載星曆，不要弄髒開源套件
 /data/ephemeris/
+
+# 本機 vsix（不入庫、不上市集）
+*.vsix
+
+# 視覺腦力激盪草稿
+.superpowers/

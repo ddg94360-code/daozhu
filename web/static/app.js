@@ -53,6 +53,8 @@ async function refreshAll() {
 function renderWeek(ov) {
   $("solar").textContent = ov.solar_term.guide || "";
   $("memory-dir").textContent = ov.memory_dir || "";
+  const railMem = $("rail-memory");
+  if (railMem) railMem.textContent = ov.memory_dir ? "記憶庫 · 本機" : "記憶庫 · 本機";
   const r = ov.report;
   const cur = r.currency || "";
   const mood = r.mood_trend || {};

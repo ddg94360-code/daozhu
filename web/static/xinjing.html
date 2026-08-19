@@ -16,22 +16,30 @@
     <circle cx="50" cy="26" r="6" fill="#111"/>
     <circle cx="50" cy="74" r="6" fill="#f2f2f2"/>
   </svg>
+  <aside id="rail" class="rail">
+    <div class="rail-brand">道樞</div>
+    <a href="/" data-short="看">看板</a>
+    <a href="/cabinet" data-short="閣">內閣</a>
+    <a href="/xinjing" aria-current="page" data-short="鏡">心鏡</a>
+    <select id="theme-select" aria-label="主題">
+      <option value="daoist">道家</option>
+      <option value="confucian">儒家</option>
+      <option value="legalist">法家</option>
+      <option value="strategist">縱橫</option>
+      <option value="taiji">太極</option>
+    </select>
+    <div id="rail-status" class="rail-status">
+      <div>127.0.0.1:8765</div>
+      <div>記憶庫 · 本機</div>
+    </div>
+  </aside>
+  <div class="shell">
   <header>
-    <div class="title">道樞</div>
-    <nav class="nav">
-      <a href="/">看板</a>
-      <a href="/cabinet">內閣</a>
-      <a href="/xinjing" aria-current="page">心鏡</a>
-      <select id="theme-select" aria-label="主題">
-        <option value="daoist">道家</option>
-        <option value="confucian">儒家</option>
-        <option value="legalist">法家</option>
-        <option value="strategist">縱橫</option>
-        <option value="taiji">太極</option>
-      </select>
-    </nav>
+    <div class="title">心鏡</div>
+    <p class="sub">示範可播；真算需接天機。舞台佔主欄。</p>
   </header>
-  <main>
+  <div class="workspace">
+    <div class="compose" id="xinjing-compose">
     <section class="card">
       <h2>萬象心鏡</h2>
       <p class="hint" id="xinjing-hint">示範仍可用；真算需 DAOZHU_TIANJI_DIR。</p>
@@ -62,8 +70,10 @@
       </form>
       <p class="err" id="xinjing-err"></p>
     </section>
-    <iframe id="xinjing-stage" title="心鏡舞台" sandbox="allow-scripts"></iframe>
-  </main>
+    </div>
+    <iframe id="xinjing-stage" class="stage-pane" title="心鏡舞台" sandbox="allow-scripts"></iframe>
+  </div>
+  </div>
   <script src="/static/xinjing.js"></script>
 </body>
 </html>

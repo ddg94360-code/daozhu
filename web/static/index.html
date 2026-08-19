@@ -16,22 +16,28 @@
     <circle cx="50" cy="26" r="6" fill="#111"/>
     <circle cx="50" cy="74" r="6" fill="#f2f2f2"/>
   </svg>
+  <aside id="rail" class="rail">
+    <div class="rail-brand">道樞</div>
+    <a href="/" aria-current="page" data-short="看">看板</a>
+    <a href="/cabinet" data-short="閣">內閣</a>
+    <a href="/xinjing" data-short="鏡">心鏡</a>
+    <select id="theme-select" aria-label="主題">
+      <option value="daoist">道家</option>
+      <option value="confucian">儒家</option>
+      <option value="legalist">法家</option>
+      <option value="strategist">縱橫</option>
+      <option value="taiji">太極</option>
+    </select>
+    <div id="rail-status" class="rail-status">
+      <div>127.0.0.1:8765</div>
+      <div id="rail-memory">記憶庫 · 本機</div>
+    </div>
+  </aside>
+  <div class="shell">
   <header>
     <div class="title">道樞</div>
     <div id="solar" class="sub"></div>
     <div id="memory-dir" class="path"></div>
-    <nav class="nav">
-      <a href="/" aria-current="page">看板</a>
-      <a href="/cabinet">內閣</a>
-      <a href="/xinjing">心鏡</a>
-      <select id="theme-select" aria-label="主題">
-        <option value="daoist">道家</option>
-        <option value="confucian">儒家</option>
-        <option value="legalist">法家</option>
-        <option value="strategist">縱橫</option>
-        <option value="taiji">太極</option>
-      </select>
-    </nav>
     <div id="perception" class="perception"></div>
   </header>
   <main>
@@ -133,6 +139,7 @@
       <p class="hint">規則先聽。聽不懂請用上面的表單，或到內閣頁。</p>
     </section>
   </main>
+  </div>
   <script src="/static/app.js"></script>
 </body>
 </html>

@@ -136,7 +136,7 @@ export DAOZHU_MEMORY_DIR=/path/to/local_memory
 python -m web
 ```
 
-Open `http://127.0.0.1:8765`. Three pages: board `/`, cabinet `/cabinet`, mirror `/xinjing`. Binds to `127.0.0.1` only. A header control switches themes (Daoist default / Confucian / Legalist / Strategist / Taiji) and remembers the choice in `localStorage`. The board has a chat line that first matches rules (`午餐吃了 150`); optional `DAOZHU_LLM_API_KEY` classifies leftovers. Cabinet can convene a five-stage meeting (`brief` / `deep` / `flash`) and follow up one minister. The mirror still plays JSON; set `DAOZHU_TIANJI_DIR` to a local tianji-mcp checkout for real tarot / gua / fengshui / chart / bazi / ziwei / meihua. Optional thin desktop: `python -m web.desktop`. Optional VS Code sidebar lives in `extension/`.
+Open `http://127.0.0.1:8765`. Three pages: board `/`, cabinet `/cabinet`, mirror `/xinjing`. Binds to `127.0.0.1` only. A left rail switches pages and themes (Daoist default / Confucian / Legalist / Strategist / Taiji) and remembers the choice in `localStorage`; below 720px the rail collapses to one-character icons. The board has a chat line that first matches rules (`午餐吃了 150`); optional `DAOZHU_LLM_API_KEY` classifies leftovers. Cabinet can convene a five-stage meeting (`brief` / `deep` / `flash`) and follow up one minister. The mirror still plays JSON; set `DAOZHU_TIANJI_DIR` to a local tianji-mcp checkout for real tarot / gua / fengshui / chart / bazi / ziwei / meihua. Optional thin desktop: `python -m web.desktop`. Optional native window (needs pywebview): `python -m web.desktop --window`. Optional VS Code sidebar lives in `extension/` (local vsix only, not Marketplace).
 
 ## Development
 
