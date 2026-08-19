@@ -11,6 +11,7 @@ All notable changes to 道樞 Dàoshū are documented here. Format follows [Keep
 - 本機儀表板第四期：內閣三檔深度＋二次質詢、心鏡計算模式補 bazi／ziwei／meihua／chart、`python -m web.desktop` 薄桌面殼、`extension/` VS Code 側欄骨架。tianji 引擎不進本套件，另抽獨立目錄。
 
 ### Fixed
+- 心鏡風水年解析改走共用 `dtLocalFrom`；內閣名檢查抽 `speech.require_cabinet`。開會後再按「排出席」不會用空五階段蓋掉本場追問。
 - 聊天窗「好／好的」不再當情緒；「到期提醒」與「待辦提醒」分開查。真抽第二次可從 JSON 讀回 `dt_local`。
 
 ### Fixed

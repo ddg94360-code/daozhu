@@ -336,11 +336,8 @@ def api_cabinet_followup(body: dict = Body(...)) -> Any:
     if not topic or not name or not question:
         return _err("invalid", "議題、內閣與追問不能空白", 400)
     try:
-        if name not in speech.CABINET_NAMES:
-            raise ValueError("查無此內閣")
-        stages = cabinet_session.stages_for_followup(
-            body.get("stages") if isinstance(body.get("stages"), list) else None
-        )
+        speech.require_cabinet(name)
+        stages = cabinet_session.stages_for_followup(body.get("stages"))
         template = speech.followup(name, topic, question, stages)
     except ValueError as e:
         return _err("invalid", str(e), 400)

@@ -27,25 +27,29 @@ function yearInRange(n) {
   return Number.isInteger(n) && n >= 1900 && n <= 2100;
 }
 
+function parseTextarea(raw) {
+  try {
+    const parsed = JSON.parse(String(raw || "").trim());
+    if (parsed && typeof parsed === "object") return parsed;
+  } catch {
+    /* textarea 不是 JSON */
+  }
+  return null;
+}
+
 function yearFrom(raw) {
   const text = String(raw || "").trim();
   const fallback = new Date().getFullYear();
-  if (looksIso(text)) {
-    const y = Number(text.slice(0, 4));
-    if (yearInRange(y)) return y;
-  }
-  try {
-    const parsed = JSON.parse(text);
-    if (parsed && yearInRange(Number(parsed.year))) return Number(parsed.year);
-    const nested = parsed && parsed.input && parsed.input.year;
+  const parsed = parseTextarea(text);
+  if (parsed) {
+    if (yearInRange(Number(parsed.year))) return Number(parsed.year);
+    const nested = parsed.input && parsed.input.year;
     if (yearInRange(Number(nested))) return Number(nested);
-    const iso = (parsed && parsed.dt_local) || (parsed && parsed.input && parsed.input.dt_local);
-    if (typeof iso === "string" && looksIso(iso.replace(" ", "T"))) {
-      const y = Number(String(iso).slice(0, 4));
-      if (yearInRange(y)) return y;
-    }
-  } catch {
-    /* 不是 JSON */
+  }
+  const iso = dtLocalFrom(text);
+  if (iso) {
+    const y = Number(iso.slice(0, 4));
+    if (yearInRange(y)) return y;
   }
   const m = text.match(/\d{4}/);
   if (m) {
@@ -56,14 +60,11 @@ function yearFrom(raw) {
 }
 
 function genderFrom(raw) {
-  try {
-    const parsed = JSON.parse(String(raw || "").trim());
-    const g = parsed && (parsed.gender || (parsed.input && parsed.input.gender));
-    const s = String(g || "").trim();
-    if (s === "男" || s === "女") return s;
-  } catch {
-    /* 不是 JSON */
-  }
+  const parsed = parseTextarea(raw);
+  if (!parsed) return "";
+  const g = parsed.gender || (parsed.input && parsed.input.gender);
+  const s = String(g || "").trim();
+  if (s === "男" || s === "女") return s;
   return "";
 }
 

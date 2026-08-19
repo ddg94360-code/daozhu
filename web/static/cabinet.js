@@ -85,7 +85,9 @@ $("cabinet-followup-form").addEventListener("submit", async (ev) => {
       name: $("cabinet-followup-name").value,
       question: $("cabinet-followup-q").value,
     };
-    if (lastStages.length) payload.stages = lastStages;
+    if (lastStages.length && lastStages.some((s) => String(s.body || "").trim())) {
+      payload.stages = lastStages;
+    }
     const data = await send("POST", "/api/cabinet/followup", payload);
     const box = $("cabinet-followup");
     box.hidden = false;

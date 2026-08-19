@@ -112,10 +112,16 @@ def fill(preview: dict, depth: str = "brief") -> list[dict]:
     return stages
 
 
-def followup(name: str, topic: str, question: str, stages: list | None = None) -> str:
-    """二次質詢模板。name 須為四子或三補丁。stages 可選，帶本場會議摘句。"""
+def require_cabinet(name: str) -> str:
+    """name 須為四子或三補丁，否則 ValueError('查無此內閣')。"""
     if name not in CABINET_NAMES:
         raise ValueError("查無此內閣")
+    return name
+
+
+def followup(name: str, topic: str, question: str, stages: list | None = None) -> str:
+    """二次質詢模板。name 須為四子或三補丁。stages 可選，帶本場會議摘句。"""
+    require_cabinet(name)
     xinfa = _xinfa(name)
     classic = _classic(name)
     ctx = stage_context(name, stages)

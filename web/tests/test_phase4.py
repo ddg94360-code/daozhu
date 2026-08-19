@@ -123,7 +123,7 @@ def test_followup_uses_server_session_without_stages(client):
     body = r.json()["body"]
     assert body
     assert "非正式" in r.json()["disclaimer"]
-    assert "先前" in body or "正名" in body or "名分" in body or "組員" in body
+    assert "先前" in body
 
 
 def test_second_convene_replaces_session(client):
@@ -345,5 +345,6 @@ def test_xinjing_cast_fake_qimen(client, tmp_path, monkeypatch):
 def test_cabinet_js_sends_followup_stages(client):
     js = client.get("/static/cabinet.js").text
     assert "lastStages" in js
-    assert "if (lastStages.length)" in js
+    assert "lastStages.length" in js
     assert "payload.stages" in js
+    assert "s.body" in js
