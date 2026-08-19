@@ -112,13 +112,36 @@ def fill(preview: dict, depth: str = "brief") -> list[dict]:
     return stages
 
 
-def followup(name: str, topic: str, question: str) -> str:
-    """二次質詢模板。name 須為四子或三補丁。"""
+def followup(name: str, topic: str, question: str, stages: list | None = None) -> str:
+    """二次質詢模板。name 須為四子或三補丁。stages 可選，帶本場會議摘句。"""
     if name not in CABINET_NAMES:
         raise ValueError("查無此內閣")
     xinfa = _xinfa(name)
     classic = _classic(name)
+    ctx = stage_context(name, stages)
+    if ctx:
+        return (
+            f"【{name}·追問】就「{topic}」再問「{question}」。"
+            f"先前：{ctx}。{xinfa}。經云「{classic}」先答這一問。"
+        )
     return f"【{name}·追問】就「{topic}」再問「{question}」：{xinfa}。經云「{classic}」先答這一問。"
+
+
+def stage_context(name: str, stages: Any) -> str:
+    """從五階段摘該內閣與結辯，供追問引用。不改入參。"""
+    if not isinstance(stages, list):
+        return ""
+    bits: list[str] = []
+    for s in stages:
+        if not isinstance(s, dict):
+            continue
+        body = str(s.get("body") or "").strip()
+        if not body:
+            continue
+        stage_name = str(s.get("name") or "")
+        if name in body or stage_name == "議長結辯":
+            bits.append(body[:160])
+    return "／".join(bits)[:280]
 
 
 def _line(member: dict, topic: str) -> str:

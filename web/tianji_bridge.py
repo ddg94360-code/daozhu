@@ -6,7 +6,10 @@ import sys
 from datetime import datetime
 from typing import Any
 
-CAST_MODES = ("tarot", "gua", "fengshui", "chart", "bazi", "ziwei", "meihua")
+CAST_MODES = (
+    "tarot", "gua", "fengshui", "chart", "bazi", "ziwei", "meihua",
+    "qimen", "qizheng", "xingming", "numerology", "lenormand", "fusion",
+)
 NARRATIVE_MODES = ("yuan", "star", "dream")
 DISCLAIMER = "命理僅供參考，非科學預測"
 NOT_CAST = "此模式不算命"
@@ -85,8 +88,27 @@ def cast(mode: str, **kw: Any) -> dict[str, Any]:
         if not str(kw.get("dt_local") or "").strip():
             raise ValueError("須提供 dt_local")
         data = _cast_ziwei(kw)
-    else:
+    elif mode == "meihua":
         data = _cast_meihua(kw)
+    elif mode == "qimen":
+        if not str(kw.get("dt_local") or "").strip():
+            raise ValueError("須提供 dt_local")
+        data = _cast_qimen(kw)
+    elif mode == "qizheng":
+        if not str(kw.get("dt_local") or "").strip():
+            raise ValueError("須提供 dt_local")
+        data = _cast_qizheng(kw)
+    elif mode == "xingming":
+        surname, given = _name_parts(kw)
+        if not surname or not given:
+            raise ValueError("須提供姓名")
+        data = _cast_xingming(kw)
+    elif mode == "numerology":
+        data = _cast_numerology(kw)
+    elif mode == "lenormand":
+        data = _cast_lenormand(kw.get("seed"))
+    else:
+        data = _cast_fusion(kw)
     return {"mode": mode, "data": data, "disclaimer": DISCLAIMER}
 
 
@@ -304,6 +326,191 @@ def _cast_meihua(kw: dict[str, Any]) -> dict[str, Any]:
         "mean": rel,
         "yao": yao,
     }
+
+
+def _gua_shell(trigram: str, name: str, mean: str, yao: list[dict]) -> dict[str, Any]:
+    return {
+        "source": DISCLAIMER,
+        "trigram": trigram,
+        "name": name,
+        "mean": mean,
+        "yao": yao,
+    }
+
+
+def _cast_qimen(kw: dict[str, Any]) -> dict[str, Any]:
+    from engines.qimen import pan
+
+    dt = _parse_dt(str(kw.get("dt_local") or "").strip())
+    raw = pan(dt.year, dt.month, dt.day, dt.hour)
+    fu = raw.get("值符") or {}
+    shi = raw.get("值使") or {}
+    trigram = str(fu.get("星") or raw.get("陰陽遁") or "")
+    name = f"{raw.get('節氣') or ''}　{raw.get('陰陽遁') or ''}{raw.get('局') or ''}".strip()
+    mean = f"值符{fu.get('星') or ''}落{fu.get('落宮') or ''}。值使{shi.get('門') or ''}門落{shi.get('落宮') or ''}"
+    yao = [
+        {"label": "節氣", "yin": False, "mark": "氣", "desc": str(raw.get("節氣") or "——")},
+        {"label": "局", "yin": False, "mark": "局", "desc": f"{raw.get('陰陽遁') or ''}{raw.get('局') or ''}"},
+        {"label": "值符", "yin": False, "mark": "符", "desc": f"{fu.get('星') or ''}　{fu.get('落宮') or ''}"},
+        {"label": "值使", "yin": True, "mark": "使", "desc": f"{shi.get('門') or ''}　{shi.get('落宮') or ''}"},
+        {"label": "日時", "yin": False, "mark": "柱", "desc": f"{raw.get('日柱') or ''}　{raw.get('時柱') or ''}"},
+        {"label": "警語", "yin": True, "mark": "注", "desc": DISCLAIMER},
+    ]
+    return _gua_shell(trigram, name, mean, yao)
+
+
+def _cast_qizheng(kw: dict[str, Any]) -> dict[str, Any]:
+    from engines.qizheng import positions
+
+    dt = _parse_dt(str(kw.get("dt_local") or "").strip())
+    raw = positions(dt.year, dt.month, dt.day, dt.hour)
+    seven = raw.get("七政") or {}
+    four = raw.get("四餘") or {}
+    colors = {
+        "太陽": "#ffd9a0", "月亮": "#a8c4ff", "水星": "#9be8b8",
+        "金星": "#ffb8d8", "火星": "#ff8a8a", "木星": "#c8a0ff", "土星": "#d8c8a0",
+    }
+    syms = {"太陽": "☉", "月亮": "☽", "水星": "☿", "金星": "♀", "火星": "♂", "木星": "♃", "土星": "♄"}
+    out = []
+    for i, name in enumerate(("太陽", "月亮", "水星", "金星", "火星", "木星", "土星")):
+        lon = seven.get(name)
+        if lon is None:
+            continue
+        out.append({
+            "name": name,
+            "sym": syms.get(name, "·"),
+            "ring": (i % 4) + 1,
+            "deg": float(lon) % 360,
+            "color": colors.get(name, "#e8e0ff"),
+            "hl": name == "太陽",
+            "meaning": "",
+        })
+    extra = "　".join(f"{k}{v}" for k, v in four.items() if v is not None)
+    return {
+        "source": DISCLAIMER,
+        "planets": out,
+        "summary": extra or DISCLAIMER,
+    }
+
+
+def _cast_xingming(kw: dict[str, Any]) -> dict[str, Any]:
+    from engines.xingming import wuge
+
+    surname, given = _name_parts(kw)
+    if not surname or not given:
+        raise ValueError("須提供姓名")
+    raw = wuge(surname, given)
+    ge = raw.get("五格") or {}
+    zong = ge.get("總格") or {}
+    yao = []
+    for label in ("天格", "人格", "地格", "外格", "總格"):
+        item = ge.get(label) or {}
+        yao.append({
+            "label": label,
+            "yin": label in ("地格", "外格", "總格"),
+            "mark": "格",
+            "desc": f"{item.get('數') or '—'}　{item.get('吉凶') or ''}".strip(),
+        })
+    yao.append({"label": "警語", "yin": True, "mark": "注", "desc": DISCLAIMER})
+    return _gua_shell(
+        str(zong.get("數") or surname + given),
+        f"{surname}{given}",
+        f"總格{zong.get('數') or '—'}（{zong.get('吉凶') or '—'}）",
+        yao,
+    )
+
+
+def _cast_numerology(kw: dict[str, Any]) -> dict[str, Any]:
+    from engines.numerology import calculate
+
+    dt_raw = str(kw.get("dt_local") or "").strip()
+    year, month, day = kw.get("year"), kw.get("month"), kw.get("day")
+    if dt_raw:
+        dt = _parse_dt(dt_raw)
+        year, month, day = dt.year, dt.month, dt.day
+    if year is None or month is None or day is None:
+        raise ValueError("須提供 dt_local")
+    raw = calculate(int(year), int(month), int(day), str(kw.get("name") or ""))
+    life = raw.get("生命靈數") or {}
+    talent = raw.get("天賦數") or {}
+    yao = [
+        {"label": "生命", "yin": False, "mark": "數", "desc": f"{life.get('數')}　{life.get('解讀') or ''}".strip()},
+        {"label": "天賦", "yin": True, "mark": "數", "desc": f"{talent.get('數')}　{talent.get('解讀') or ''}".strip()},
+        {"label": "大師", "yin": False, "mark": "注", "desc": "是" if raw.get("大師數") else "否"},
+        {"label": "出生", "yin": True, "mark": "日", "desc": str((raw.get("input") or {}).get("birth") or "")},
+        {"label": "警語", "yin": True, "mark": "注", "desc": DISCLAIMER},
+        {"label": "名", "yin": False, "mark": "名", "desc": str((raw.get("input") or {}).get("name") or "——")},
+    ]
+    return _gua_shell(str(life.get("數") or ""), str(talent.get("數") or ""), str(life.get("解讀") or ""), yao)
+
+
+def _cast_lenormand(seed: Any) -> dict[str, Any]:
+    from engines.lenormand import draw
+
+    raw = draw(n=3, seed=_int_or_none(seed))
+    cards = []
+    for i, c in enumerate(raw.get("cards") or []):
+        cards.append({
+            "phase": c.get("position") or (("一", "二", "三")[i] if i < 3 else str(i + 1)),
+            "img": "",
+            "en": c.get("name") or "",
+            "desc": f"{c.get('orientation') or ''}。{c.get('meaning') or ''}".strip("。"),
+            "tip": c.get("orientation") or "",
+        })
+    return {
+        "source": DISCLAIMER,
+        "cards": cards,
+        "delays": [400, 1500, 2700],
+        "verdict": "、".join(c.get("en") or "" for c in cards),
+    }
+
+
+def _cast_fusion(kw: dict[str, Any]) -> dict[str, Any]:
+    from engines.fusion import zonghe
+
+    if not str(kw.get("dt_local") or "").strip():
+        raise ValueError("須提供 dt_local")
+    dt = _parse_dt(str(kw.get("dt_local") or "").strip())
+    raw = zonghe(
+        dt,
+        tz_offset_hours=float(kw.get("tz_offset_hours") or 8),
+        lon=float(kw.get("lon") or 120),
+        lat=float(kw.get("lat") or 22.3),
+        gender=str(kw.get("gender") or "男"),
+    )
+    faces = raw.get("合參") or {}
+    bazi = raw.get("八字摘要") or {}
+    natal = raw.get("占星摘要") or {}
+    yao = []
+    for label in ("性格", "事業", "財運", "感情", "健康"):
+        face = faces.get(label) or {}
+        yao.append({
+            "label": label,
+            "yin": label in ("財運", "感情", "健康"),
+            "mark": str(face.get("判別") or "—"),
+            "desc": f"{face.get('八字') or ''}／{face.get('占星') or ''}",
+        })
+    yao.append({"label": "警語", "yin": True, "mark": "注", "desc": DISCLAIMER})
+    sizhu = bazi.get("四柱") or {}
+    trigram = str(sizhu.get("日柱") or bazi.get("格局") or "")
+    name = f"日{natal.get('太陽') or ''}　月{natal.get('月亮') or ''}　升{natal.get('上升') or ''}"
+    character = (faces.get("性格") or {}).get("說明") or ""
+    return _gua_shell(trigram, name, f"{bazi.get('格局') or ''}。{character}".strip("。"), yao)
+
+
+def _name_parts(kw: dict[str, Any]) -> tuple[str, str]:
+    surname = str(kw.get("surname") or "").strip()
+    given = str(kw.get("given") or "").strip()
+    if surname and given:
+        return surname, given
+    q = str(kw.get("question") or kw.get("name") or "").strip()
+    q = q.replace("　", " ").strip()
+    if " " in q:
+        a, b = q.split(" ", 1)
+        return a.strip(), b.strip()
+    if len(q) >= 2:
+        return q[0], q[1:]
+    return surname, given
 
 
 def _parse_dt(raw: str) -> datetime:

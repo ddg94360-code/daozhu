@@ -44,10 +44,14 @@ $("xinjing-cast").addEventListener("click", async () => {
     const raw = ($("xinjing-data").value || "").trim();
     if (mode === "gua") extra.question = raw.slice(0, 80);
     if (mode === "fengshui") extra.year = new Date().getFullYear();
-    if (mode === "chart" || mode === "bazi" || mode === "ziwei") {
+    if (mode === "chart" || mode === "bazi" || mode === "ziwei" || mode === "qimen" || mode === "qizheng" || mode === "numerology" || mode === "fusion") {
       extra.dt_local = dtLocalFrom(raw);
     }
     if (mode === "meihua") extra.numbers = twoInts(raw);
+    if (mode === "xingming") {
+      extra.question = raw.slice(0, 80);
+      extra.name = raw.slice(0, 80);
+    }
     extra.question = extra.question || raw.slice(0, 80);
     const r = await fetch("/api/xinjing/cast", {
       method: "POST",
@@ -57,7 +61,9 @@ $("xinjing-cast").addEventListener("click", async () => {
     const body = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(body.message || r.statusText);
     $("xinjing-data").value = JSON.stringify(body.data, null, 2);
-    const playMode = ["bazi", "ziwei", "meihua"].includes(body.mode) ? "gua" : body.mode;
+    const playMode = ["bazi", "ziwei", "meihua", "qimen", "xingming", "numerology", "fusion"].includes(body.mode)
+      ? "gua"
+      : (body.mode === "qizheng" ? "chart" : (body.mode === "lenormand" ? "tarot" : body.mode));
     const play = await fetch("/api/xinjing/render", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

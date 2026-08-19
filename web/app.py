@@ -333,17 +333,22 @@ def api_cabinet_followup(body: dict = Body(...)) -> Any:
     question = str(body.get("question", "")).strip()
     if not topic or not name or not question:
         return _err("invalid", "議題、內閣與追問不能空白", 400)
+    stages = body.get("stages") if isinstance(body.get("stages"), list) else None
     try:
-        template = speech.followup(name, topic, question)
+        template = speech.followup(name, topic, question, stages)
     except ValueError as e:
         return _err("invalid", str(e), 400)
     source = "template"
     text = template
     if llm.available():
+        prior = speech.stage_context(name, stages)
         llm_text = llm.chat(
             [
-                {"role": "system", "content": "你是道樞內閣。只輸出這一位的追問答覆，繁體中文，≤80字。不要 markdown。"},
-                {"role": "user", "content": f"你是{name}。議題：{topic}。追問：{question}"},
+                {"role": "system", "content": "你是道樞內閣。只輸出這一位的追問答覆，繁體中文，≤80字。不要 markdown。可引用先前發言，但不要改寫五階段原文。"},
+                {"role": "user", "content": (
+                    f"你是{name}。議題：{topic}。追問：{question}"
+                    + (f"\n先前發言：{prior}" if prior else "")
+                )},
             ],
             temperature=0.4,
         )
@@ -543,6 +548,11 @@ def api_xinjing_cast(body: dict = Body(...)) -> Any:
             lon=body.get("lon"),
             tz_offset_hours=body.get("tz_offset_hours"),
             numbers=body.get("numbers"),
+            surname=body.get("surname"),
+            given=body.get("given"),
+            name=body.get("name"),
+            month=body.get("month"),
+            day=body.get("day"),
         )
     except RuntimeError as e:
         if str(e) == "未接天機":

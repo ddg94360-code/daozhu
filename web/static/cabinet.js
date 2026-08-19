@@ -1,4 +1,5 @@
 const $ = (id) => document.getElementById(id);
+let lastStages = [];
 
 async function send(method, path, body) {
   const r = await fetch(path, {
@@ -46,6 +47,7 @@ function render(preview) {
     card.appendChild(body);
     box.appendChild(card);
   }
+  lastStages = preview.stages || [];
 }
 
 $("cabinet-form").addEventListener("submit", async (ev) => {
@@ -82,6 +84,7 @@ $("cabinet-followup-form").addEventListener("submit", async (ev) => {
       topic,
       name: $("cabinet-followup-name").value,
       question: $("cabinet-followup-q").value,
+      stages: lastStages,
     });
     const box = $("cabinet-followup");
     box.hidden = false;
