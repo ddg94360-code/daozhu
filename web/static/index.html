@@ -122,6 +122,16 @@
       <div id="daozang"></div>
       <p class="hint">只讀。寫入請在對話用／藏。</p>
     </section>
+    <section class="card" id="chat-card">
+      <h2>對話</h2>
+      <ul id="chat-log"></ul>
+      <form id="chat-form">
+        <input name="text" id="chat-text" placeholder="午餐吃了 150" autocomplete="off" required>
+        <button type="submit">送出</button>
+      </form>
+      <p class="err" id="chat-err"></p>
+      <p class="hint">規則先聽。聽不懂請用上面的表單，或到內閣頁。</p>
+    </section>
   </main>
   <script src="/static/app.js"></script>
 </body>

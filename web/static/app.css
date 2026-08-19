@@ -143,3 +143,24 @@ textarea { width: 100%; min-height: 8rem; background: var(--bg0); color: var(--t
 .persona h3 { font-size: .75rem; color: var(--muted); letter-spacing: .15em; }
 li button { margin-left: .4rem; }
 #expense-summary { font-size: .8rem; margin-bottom: .4rem; }
+#chat-card { grid-column: 1 / -1; }
+#chat-log { max-height: 12rem; overflow: auto; }
+.stage-card .body { font-size: .78rem; white-space: pre-wrap; margin-top: .35rem; }
+#cabinet-followup[hidden] { display: none; }
+#cabinet-followup {
+  margin-top: .7rem;
+  border-left: 3px solid var(--accent);
+  padding-left: 1rem;
+}
+#cabinet-followup h2 {
+  font-size: .72rem;
+  letter-spacing: .28em;
+}
+#cabinet-depth { letter-spacing: .12em; }
+#cabinet-followup-form { align-items: center; }
+#xinjing-form select option[value="bazi"],
+#xinjing-form select option[value="ziwei"],
+#xinjing-form select option[value="meihua"] { font-style: italic; }
+@media (prefers-reduced-motion: reduce) {
+  .taiji-fish { animation: none; }
+}

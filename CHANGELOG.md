@@ -4,6 +4,9 @@ All notable changes to 道樞 Dàoshū are documented here. Format follows [Keep
 
 ## [Unreleased]
 
+### Added
+- 本機儀表板第四期：內閣三檔深度＋二次質詢、心鏡計算模式補 bazi／ziwei／meihua／chart、`python -m web.desktop` 薄桌面殼、`extension/` VS Code 側欄骨架。tianji 引擎不進本套件，另抽獨立目錄。
+
 ### Fixed
 - `due_reminders` / monthly summaries / study-note review dates now share `memory_store.now()` (via `_wall_clock` seam). Tests freeze time by patching `_wall_clock`; the previous wall-clock leak made `test_due_reminders_filters_by_time` fail after 2026-08-14.
 - `mark_reminder_done` and `check_shopping` now update in place (`done` / `checked`) instead of deleting the record.
@@ -11,6 +14,7 @@ All notable changes to 道樞 Dàoshū are documented here. Format follows [Keep
 - Energy insight threshold reads `energy_analysis_days` from config instead of a hardcoded 7.
 
 ### Added
+- 本機儀表板第三期：看板規則聊天窗（可選 LLM 分類）、內閣模板／可選模型五階段、心鏡外掛本機 tianji（`DAOZHU_TIANJI_DIR`）。不複製引擎、不寫道藏。
 - 本機儀表板 2.5 期：五套可切主題（道家預設／儒家／法家／縱橫／太極），`localStorage` 記住；太極附慢轉陰陽魚。紫夜只留在心鏡 iframe。
 - 本機儀表板第二期：筆記 CRUD、決策寫入、道藏只讀、感知條（記憶推斷）、內閣組閣預覽、心鏡 JSON 播放、統一 500 handler
 - `daily.mark_study_note_reviewed_by_id` / `daily.delete_study_note_by_id`（MCP 同名）；新筆記帶 `id`

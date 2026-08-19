@@ -34,18 +34,23 @@
   <main>
     <section class="card">
       <h2>萬象心鏡</h2>
-      <p class="hint">只播放 JSON。不算卦、不抽牌。日後可接真計算 skill。</p>
+      <p class="hint" id="xinjing-hint">示範仍可用；真算需 DAOZHU_TIANJI_DIR。</p>
+      <p class="hint" id="xinjing-status"></p>
       <form id="xinjing-form">
         <select name="mode" id="xinjing-mode">
           <option>tarot</option>
           <option>gua</option>
-          <option>yuan</option>
-          <option>chart</option>
           <option>fengshui</option>
+          <option>chart</option>
+          <option>bazi</option>
+          <option>ziwei</option>
+          <option>meihua</option>
+          <option>yuan</option>
           <option>star</option>
           <option>dream</option>
         </select>
         <button type="button" id="xinjing-example">載入示範</button>
+        <button type="button" id="xinjing-cast">真抽／真起</button>
         <button type="submit">播放</button>
         <textarea name="data" id="xinjing-data" placeholder='{"source":"…"}'></textarea>
       </form>

@@ -1,0 +1,37 @@
+{
+  "name": "daozhu-dashboard",
+  "displayName": "道樞儀表板",
+  "description": "本機 loopback 記憶儀表板側欄。請先在套件根目錄執行 python -m web。",
+  "version": "0.4.0",
+  "publisher": "daozhu",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:daozhu.sidebar"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "daozhu",
+          "title": "道樞",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "daozhu": [
+        {
+          "type": "webview",
+          "id": "daozhu.sidebar",
+          "name": "儀表板"
+        }
+      ]
+    }
+  }
+}

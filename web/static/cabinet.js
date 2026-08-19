@@ -38,8 +38,12 @@ function render(preview) {
     const who = document.createElement("p");
     who.className = "who";
     who.textContent = s.who || "";
+    const body = document.createElement("p");
+    body.className = "body";
+    body.textContent = s.body || "";
     card.appendChild(name);
     card.appendChild(who);
+    card.appendChild(body);
     box.appendChild(card);
   }
 }
@@ -52,5 +56,48 @@ $("cabinet-form").addEventListener("submit", async (ev) => {
     render(await send("POST", "/api/cabinet/preview", { topic: fd.get("topic") }));
   } catch (e) {
     $("cabinet-err").textContent = e.message;
+  }
+});
+
+$("cabinet-convene").addEventListener("click", async () => {
+  $("cabinet-err").textContent = "";
+  try {
+    const topic = new FormData($("cabinet-form")).get("topic");
+    render(await send("POST", "/api/cabinet/convene", {
+      topic,
+      persist: $("cabinet-persist").checked,
+      depth: $("cabinet-depth").value,
+    }));
+  } catch (e) {
+    $("cabinet-err").textContent = e.message;
+  }
+});
+
+$("cabinet-followup-form").addEventListener("submit", async (ev) => {
+  ev.preventDefault();
+  $("cabinet-followup-err").textContent = "";
+  try {
+    const topic = new FormData($("cabinet-form")).get("topic");
+    const data = await send("POST", "/api/cabinet/followup", {
+      topic,
+      name: $("cabinet-followup-name").value,
+      question: $("cabinet-followup-q").value,
+    });
+    const box = $("cabinet-followup");
+    box.hidden = false;
+    box.replaceChildren();
+    const h = document.createElement("h2");
+    h.textContent = `${data.name}　追問`;
+    const q = document.createElement("p");
+    q.className = "who";
+    q.textContent = data.question || "";
+    const body = document.createElement("p");
+    body.className = "body";
+    body.textContent = data.body || "";
+    box.appendChild(h);
+    box.appendChild(q);
+    box.appendChild(body);
+  } catch (e) {
+    $("cabinet-followup-err").textContent = e.message;
   }
 });

@@ -123,7 +123,7 @@ export DAOZHU_MEMORY_DIR=/path/to/local_memory
 python -m web
 ```
 
-開啟 `http://127.0.0.1:8765`。三頁：看板 `/`、內閣 `/cabinet`、心鏡 `/xinjing`。只綁定 `127.0.0.1`。頂欄可切主題（道家預設／儒家／法家／縱橫／太極），選擇存在瀏覽器 `localStorage`。學習筆記可新增、按 id 標已複習、按 id 刪除。內閣頁只排出席，不生成會議文字。心鏡播放示範或自貼 JSON，不算真卦。
+開啟 `http://127.0.0.1:8765`。三頁：看板 `/`、內閣 `/cabinet`、心鏡 `/xinjing`。只綁定 `127.0.0.1`。頂欄可切主題（道家預設／儒家／法家／縱橫／太極），選擇存在瀏覽器 `localStorage`。看板底欄可打「午餐吃了 150」；規則先聽，可選 `DAOZHU_LLM_API_KEY` 才問模型。內閣可開會（精簡／深度／即時共識）並對單一內閣追問。心鏡示範仍可用；設 `DAOZHU_TIANJI_DIR` 指向本機 tianji-mcp 才真算（塔羅／六爻／風水／星盤／八字／紫微／梅花）。薄桌面殼：`python -m web.desktop`。VS Code 側欄骨架在 `extension/`。
 
 ## 開發
 

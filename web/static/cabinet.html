@@ -36,10 +36,35 @@
       <h2>議題</h2>
       <form id="cabinet-form">
         <textarea name="topic" placeholder="組員不做事該怎麼講" required></textarea>
+        <select id="cabinet-depth" name="depth" aria-label="會議深度">
+          <option value="brief">精簡</option>
+          <option value="deep">深度</option>
+          <option value="flash">即時共識</option>
+        </select>
         <button type="submit">排出席</button>
+        <button type="button" id="cabinet-convene">開會</button>
+        <label><input type="checkbox" id="cabinet-persist"> 記入「會議已開」</label>
       </form>
       <p class="err" id="cabinet-err"></p>
       <p class="hint" id="cabinet-disc"></p>
+    </section>
+    <section class="card">
+      <h2>追問</h2>
+      <form id="cabinet-followup-form">
+        <select id="cabinet-followup-name" aria-label="內閣">
+          <option>儒家</option>
+          <option>道家</option>
+          <option>法家</option>
+          <option>縱橫家</option>
+          <option>兵家</option>
+          <option>墨家</option>
+          <option>佛教</option>
+        </select>
+        <input id="cabinet-followup-q" name="question" placeholder="先說哪一句" required>
+        <button type="submit">追問</button>
+      </form>
+      <p class="err" id="cabinet-followup-err"></p>
+      <div id="cabinet-followup" class="stage-card card" hidden></div>
     </section>
     <section class="card">
       <h2>出席</h2>

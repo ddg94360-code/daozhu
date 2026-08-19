@@ -136,7 +136,7 @@ export DAOZHU_MEMORY_DIR=/path/to/local_memory
 python -m web
 ```
 
-Open `http://127.0.0.1:8765`. Three pages: board `/`, cabinet `/cabinet`, mirror `/xinjing`. Binds to `127.0.0.1` only. A header control switches themes (Daoist default / Confucian / Legalist / Strategist / Taiji) and remembers the choice in `localStorage`. Study notes can be added, marked reviewed, and deleted by id. Cabinet preview seats ministers and does not generate speeches. The mirror plays example or pasted JSON and does not cast real hexagrams.
+Open `http://127.0.0.1:8765`. Three pages: board `/`, cabinet `/cabinet`, mirror `/xinjing`. Binds to `127.0.0.1` only. A header control switches themes (Daoist default / Confucian / Legalist / Strategist / Taiji) and remembers the choice in `localStorage`. The board has a chat line that first matches rules (`午餐吃了 150`); optional `DAOZHU_LLM_API_KEY` classifies leftovers. Cabinet can convene a five-stage meeting (`brief` / `deep` / `flash`) and follow up one minister. The mirror still plays JSON; set `DAOZHU_TIANJI_DIR` to a local tianji-mcp checkout for real tarot / gua / fengshui / chart / bazi / ziwei / meihua. Optional thin desktop: `python -m web.desktop`. Optional VS Code sidebar lives in `extension/`.
 
 ## Development
 

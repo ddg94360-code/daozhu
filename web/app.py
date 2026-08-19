@@ -40,7 +40,11 @@ import solarterm
 import weekly
 
 import cabinet
+import llm
 import perception
+import router
+import speech
+import tianji_bridge
 
 app = FastAPI(title="道樞儀表板", docs_url=None, redoc_url=None)
 
@@ -290,6 +294,210 @@ def api_cabinet_preview(body: dict = Body(...)) -> Any:
     return cabinet.preview(topic)
 
 
+@app.post("/api/cabinet/convene")
+def api_cabinet_convene(body: dict = Body(...)) -> Any:
+    topic = str(body.get("topic", "")).strip()
+    if not topic:
+        return _err("invalid", "議題不能空白", 400)
+    try:
+        depth = speech.normalize_depth(body.get("depth"))
+    except ValueError as e:
+        return _err("invalid", str(e), 400)
+    preview = cabinet.preview(topic)
+    source = "template"
+    stages = speech.fill(preview, depth)
+    if llm.available():
+        filled, source = _convene_with_llm(preview, stages, depth)
+        stages = filled
+    preview["stages"] = stages
+    preview["source"] = source
+    preview["depth"] = depth
+    preview["disclaimer"] = (
+        "模型發言，非正式會議紀錄。" if source == "llm"
+        else "模板與模型混用，非正式會議紀錄。" if source == "mixed"
+        else "模板發言，非正式會議紀錄。"
+    )
+    if body.get("persist"):
+        closing = next((s.get("body") or "" for s in stages if s.get("name") == "議長結辯"), "")
+        daily.log_decision(topic, "會議已開", closing[:200])
+        preview["persisted"] = True
+    else:
+        preview["persisted"] = False
+    return preview
+
+
+@app.post("/api/cabinet/followup")
+def api_cabinet_followup(body: dict = Body(...)) -> Any:
+    topic = str(body.get("topic", "")).strip()
+    name = str(body.get("name", "")).strip()
+    question = str(body.get("question", "")).strip()
+    if not topic or not name or not question:
+        return _err("invalid", "議題、內閣與追問不能空白", 400)
+    try:
+        template = speech.followup(name, topic, question)
+    except ValueError as e:
+        return _err("invalid", str(e), 400)
+    source = "template"
+    text = template
+    if llm.available():
+        llm_text = llm.chat(
+            [
+                {"role": "system", "content": "你是道樞內閣。只輸出這一位的追問答覆，繁體中文，≤80字。不要 markdown。"},
+                {"role": "user", "content": f"你是{name}。議題：{topic}。追問：{question}"},
+            ],
+            temperature=0.4,
+        )
+        if llm_text:
+            text = llm_text
+            source = "llm"
+    return {
+        "name": name,
+        "topic": topic,
+        "question": question,
+        "body": text,
+        "source": source,
+        "disclaimer": (
+            "模型追問，非正式會議紀錄。" if source == "llm"
+            else "模板追問，非正式會議紀錄。"
+        ),
+    }
+
+
+def _convene_with_llm(preview: dict, template_stages: list[dict], depth: str = "brief") -> tuple[list[dict], str]:
+    stages = [dict(s) for s in template_stages]
+    used_llm = False
+    used_template = False
+    names = "、".join(m.get("name", "") for m in (preview.get("core") or []) + (preview.get("adjunct") or []))
+    topic = preview.get("topic") or ""
+    limits = {
+        "brief": "核心每人≤80字、列席≤60字、議長≤120字。",
+        "deep": "核心每人兩句≤160字、列席一句並可再質詢≤80字、議長分共識／分歧／建議≤180字。",
+        "flash": "只寫各抒一段合計≤150字。開題一句。列席與結辯不要寫。",
+    }
+    for stage in stages:
+        name = stage.get("name")
+        if name == "您裁決":
+            continue
+        if depth == "flash" and name in {"列席補充", "議長結辯"}:
+            continue
+        prompt = (
+            f"議題：{topic}\n出席：{names}\n階段：{name}（{stage.get('who')}）\n深度：{depth}\n"
+            f"用繁體中文寫這一段會議發言。{limits.get(depth, limits['brief'])}"
+            "不要 markdown。"
+        )
+        text = llm.chat(
+            [
+                {"role": "system", "content": "你是道樞內閣會議書記。只輸出該階段正文。"},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.4,
+        )
+        if text:
+            stage["body"] = text
+            used_llm = True
+        else:
+            used_template = True
+    if used_llm and used_template:
+        return stages, "mixed"
+    if used_llm:
+        return stages, "llm"
+    return stages, "template"
+
+
+@app.post("/api/chat")
+def api_chat(body: dict = Body(...)) -> Any:
+    text = str(body.get("text", "")).strip()
+    if not text:
+        return _err("invalid", "內容不能空白", 400)
+    parsed = router.parse(text)
+    source = "rule"
+    if parsed.get("intent") == "unknown" and llm.available():
+        classified = llm.classify(text)
+        if classified and classified.get("intent") not in (None, "unknown"):
+            parsed = classified
+            source = "llm"
+    intent = str(parsed.get("intent") or "unknown")
+    slots = parsed.get("slots") if isinstance(parsed.get("slots"), dict) else {}
+    if intent not in router.INTENTS:
+        intent = "unknown"
+    if intent == "unknown":
+        hint = str(slots.get("hint") or "聽不懂，請用表單或到內閣頁")
+        return {"ok": False, "intent": "unknown", "source": "none" if source == "rule" else source, "reply": hint, "result": {}}
+    return _dispatch_chat(intent, slots, source)
+
+
+def _dispatch_chat(intent: str, slots: dict, source: str) -> dict:
+    try:
+        if intent == "expense":
+            item = str(slots.get("item") or "").strip() or "未名項目"
+            amount = float(slots.get("amount"))
+            result = daily.log_expense(item, amount, str(slots.get("category") or ""))
+            rec = result["record"]
+            return _chat_ok(intent, source, f"已記入{rec['item']} {rec['amount']}（{rec['category']}）", result)
+        if intent == "mood":
+            mood = str(slots.get("mood") or "").strip()
+            if not mood:
+                return _chat_fail(intent, source, "情緒不能空白")
+            result = daily.log_mood(mood)
+            return _chat_ok(intent, source, f"已記下情緒（{result['record']['classification']}）", result)
+        if intent == "shopping_add":
+            item = str(slots.get("item") or "").strip()
+            if not item:
+                return _chat_fail(intent, source, "採買項目不能空白")
+            result = daily.add_shopping(item)
+            return _chat_ok(intent, source, f"已加入採買：{item}", result)
+        if intent == "health":
+            result = daily.log_health(
+                float(slots.get("sleep_hours") or 0),
+                str(slots.get("exercise") or ""),
+                str(slots.get("water") or ""),
+            )
+            return _chat_ok(intent, source, "已打卡健康", result)
+        if intent == "reminder":
+            content = str(slots.get("content") or "").strip()
+            dt = str(slots.get("datetime") or "").strip()
+            if not content or not dt:
+                return _chat_fail(intent, source, "提醒缺少內容或時間，請用表單")
+            result = daily.add_reminder(content, dt, False)
+            return _chat_ok(intent, source, f"已設提醒：{content}", result)
+        if intent == "note":
+            subject = str(slots.get("subject") or "").strip()
+            content = str(slots.get("content") or "").strip()
+            if not subject or not content:
+                return _chat_fail(intent, source, "筆記須有科目與內容")
+            result = daily.add_study_note(subject, content, int(slots.get("review_days") or 7))
+            return _chat_ok(intent, source, f"已記入筆記：{subject}", result)
+        if intent == "decision":
+            topic = str(slots.get("topic") or "").strip()
+            verdict = str(slots.get("verdict") or "").strip()
+            if not topic or not verdict:
+                return _chat_fail(intent, source, "裁決須有題目與結論")
+            result = daily.log_decision(topic, verdict, str(slots.get("reason") or ""))
+            return _chat_ok(intent, source, f"已記下裁決：{verdict}", result)
+        if intent == "query_expense":
+            summary = daily.month_expense_summary()
+            return _chat_ok(intent, source, f"本月合計 {summary.get('currency') or ''}{summary['total']}", summary)
+        if intent == "query_reminders":
+            recs = daily.due_reminders()
+            reply = "沒有到期提醒" if not recs else "到期：" + "、".join(r.get("content") or "" for r in recs[:8])
+            return _chat_ok(intent, source, reply, {"records": recs})
+        if intent == "query_notes":
+            recs = daily.due_study_notes()
+            reply = "沒有到期筆記" if not recs else "待複習：" + "、".join(r.get("subject") or "" for r in recs[:8])
+            return _chat_ok(intent, source, reply, {"records": recs})
+    except (TypeError, ValueError):
+        return _chat_fail(intent, source, "欄位不夠，請用表單")
+    return _chat_fail(intent, source, "聽不懂，請用表單或到內閣頁")
+
+
+def _chat_ok(intent: str, source: str, reply: str, result: Any) -> dict:
+    return {"ok": True, "intent": intent, "source": source, "reply": reply, "result": result}
+
+
+def _chat_fail(intent: str, source: str, reply: str) -> dict:
+    return {"ok": False, "intent": intent, "source": source, "reply": reply, "result": {}}
+
+
 @app.get("/api/xinjing/examples")
 def api_xinjing_modes() -> dict:
     return {"modes": list(_XINJING_MODES)}
@@ -306,6 +514,37 @@ def api_xinjing_example(mode: str) -> Any:
 
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+@app.get("/api/xinjing/status")
+def api_xinjing_status() -> dict:
+    return tianji_bridge.status()
+
+
+@app.post("/api/xinjing/cast")
+def api_xinjing_cast(body: dict = Body(...)) -> Any:
+    mode = str(body.get("mode", "")).strip()
+    if mode in tianji_bridge.NARRATIVE_MODES or mode not in tianji_bridge.CAST_MODES:
+        return _err("invalid", "此模式不算命", 400)
+    try:
+        return tianji_bridge.cast(
+            mode,
+            question=body.get("question"),
+            seed=body.get("seed"),
+            year=body.get("year"),
+            gender=body.get("gender") or "男",
+            dt_local=body.get("dt_local"),
+            lat=body.get("lat"),
+            lon=body.get("lon"),
+            tz_offset_hours=body.get("tz_offset_hours"),
+            numbers=body.get("numbers"),
+        )
+    except RuntimeError as e:
+        if str(e) == "未接天機":
+            return _err("unavailable", "未接天機", 503)
+        raise
+    except ValueError as e:
+        return _err("invalid", str(e) or "參數不正確", 400)
 
 
 @app.post("/api/xinjing/render")

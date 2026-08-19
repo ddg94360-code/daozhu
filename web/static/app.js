@@ -319,4 +319,18 @@ bindForm("decision-form", "decision-err", async (fd) => {
   renderPerception(await get("/api/perception"));
 });
 
+function chatLine(who, text) {
+  const el = document.createElement("li");
+  el.textContent = `${who}　${text}`;
+  return el;
+}
+
+bindForm("chat-form", "chat-err", async (fd) => {
+  const text = String(fd.get("text") || "").trim();
+  $("chat-log").appendChild(chatLine("你", text));
+  const res = await send("POST", "/api/chat", { text });
+  $("chat-log").appendChild(chatLine("樞", res.reply || ""));
+  await refreshAll();
+});
+
 refreshAll().catch((e) => { $("week").textContent = e.message; });

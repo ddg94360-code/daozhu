@@ -1,0 +1,6 @@
+**/.git
+**/__pycache__
+**/.pytest_cache
+**/local_memory
+**/*.pyc
+README.md
