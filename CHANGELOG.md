@@ -5,6 +5,7 @@ All notable changes to 道樞 Dàoshū are documented here. Format follows [Keep
 ## [Unreleased]
 
 ### Added
+- 本機儀表板後續：心鏡風水真抽從 textarea 解析出生年（可選性別），解析不到才回落今年。內閣 convene 把最近一場五階段放進行程單槽；followup 無客戶端 `stages` 時用暫存，兩者都沒有則 400「尚無本場會議」。不寫 `local_memory/`。
 - 本機儀表板第六期 I＋J：三頁左軌導覽（窄寬 &lt;720px 收成一字圖示）；`python -m web.desktop --window` 用 pywebview 開系統標題列視窗（預設仍是第四期瀏覽器薄殼）；可打本機 `daozhu-dashboard-0.4.0.vsix`（不入庫、不上市集）。
 - 本機儀表板第五期：內閣追問可帶本場五階段摘句（不寫記憶）；心鏡真算加奇門／七政／姓名／靈數／雷諾曼／合參。敘事層仍不算命。
 - 本機儀表板第四期：內閣三檔深度＋二次質詢、心鏡計算模式補 bazi／ziwei／meihua／chart、`python -m web.desktop` 薄桌面殼、`extension/` VS Code 側欄骨架。tianji 引擎不進本套件，另抽獨立目錄。

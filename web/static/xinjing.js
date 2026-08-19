@@ -23,6 +23,50 @@ function dtLocalFrom(raw) {
   return "";
 }
 
+function yearInRange(n) {
+  return Number.isInteger(n) && n >= 1900 && n <= 2100;
+}
+
+function yearFrom(raw) {
+  const text = String(raw || "").trim();
+  const fallback = new Date().getFullYear();
+  if (looksIso(text)) {
+    const y = Number(text.slice(0, 4));
+    if (yearInRange(y)) return y;
+  }
+  try {
+    const parsed = JSON.parse(text);
+    if (parsed && yearInRange(Number(parsed.year))) return Number(parsed.year);
+    const nested = parsed && parsed.input && parsed.input.year;
+    if (yearInRange(Number(nested))) return Number(nested);
+    const iso = (parsed && parsed.dt_local) || (parsed && parsed.input && parsed.input.dt_local);
+    if (typeof iso === "string" && looksIso(iso.replace(" ", "T"))) {
+      const y = Number(String(iso).slice(0, 4));
+      if (yearInRange(y)) return y;
+    }
+  } catch {
+    /* 不是 JSON */
+  }
+  const m = text.match(/\d{4}/);
+  if (m) {
+    const y = Number(m[0]);
+    if (yearInRange(y)) return y;
+  }
+  return fallback;
+}
+
+function genderFrom(raw) {
+  try {
+    const parsed = JSON.parse(String(raw || "").trim());
+    const g = parsed && (parsed.gender || (parsed.input && parsed.input.gender));
+    const s = String(g || "").trim();
+    if (s === "男" || s === "女") return s;
+  } catch {
+    /* 不是 JSON */
+  }
+  return "";
+}
+
 async function get(path) {
   const r = await fetch(path);
   const data = await r.json().catch(() => ({}));
@@ -43,7 +87,11 @@ $("xinjing-cast").addEventListener("click", async () => {
     const extra = {};
     const raw = ($("xinjing-data").value || "").trim();
     if (mode === "gua") extra.question = raw.slice(0, 80);
-    if (mode === "fengshui") extra.year = new Date().getFullYear();
+    if (mode === "fengshui") {
+      extra.year = yearFrom(raw);
+      const g = genderFrom(raw);
+      if (g) extra.gender = g;
+    }
     if (mode === "chart" || mode === "bazi" || mode === "ziwei" || mode === "qimen" || mode === "qizheng" || mode === "numerology" || mode === "fusion") {
       extra.dt_local = dtLocalFrom(raw);
     }
